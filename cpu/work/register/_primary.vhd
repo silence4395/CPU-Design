@@ -1,0 +1,45 @@
+library verilog;
+use verilog.vl_types.all;
+entity \register\ is
+    port(
+        data1           : out    vl_logic_vector(31 downto 0);
+        reg_number1     : in     vl_logic_vector(4 downto 0);
+        read1           : in     vl_logic;
+        data2           : out    vl_logic_vector(31 downto 0);
+        reg_number2     : in     vl_logic_vector(4 downto 0);
+        read2           : in     vl_logic;
+        data3           : in     vl_logic_vector(31 downto 0);
+        reg_number3     : in     vl_logic_vector(4 downto 0);
+        write3          : in     vl_logic;
+        data4           : out    vl_logic_vector(31 downto 0);
+        reg_number4     : in     vl_logic_vector(4 downto 0);
+        read4           : in     vl_logic;
+        data5           : out    vl_logic_vector(31 downto 0);
+        reg_number5     : in     vl_logic_vector(4 downto 0);
+        read5           : in     vl_logic;
+        data6           : in     vl_logic_vector(31 downto 0);
+        reg_number6     : in     vl_logic_vector(4 downto 0);
+        write6          : in     vl_logic;
+        data7           : out    vl_logic_vector(31 downto 0);
+        reg_number7     : in     vl_logic_vector(4 downto 0);
+        read7           : in     vl_logic;
+        data8           : out    vl_logic_vector(31 downto 0);
+        reg_number8     : in     vl_logic_vector(4 downto 0);
+        read8           : in     vl_logic;
+        data9           : in     vl_logic_vector(31 downto 0);
+        reg_number9     : in     vl_logic_vector(4 downto 0);
+        write9          : in     vl_logic;
+        data10          : out    vl_logic_vector(31 downto 0);
+        reg_number10    : in     vl_logic_vector(4 downto 0);
+        read10          : in     vl_logic;
+        data11          : out    vl_logic_vector(31 downto 0);
+        reg_number11    : in     vl_logic_vector(4 downto 0);
+        read11          : in     vl_logic;
+        data12          : in     vl_logic_vector(31 downto 0);
+        reg_number12    : in     vl_logic_vector(4 downto 0);
+        write12         : in     vl_logic;
+        data13          : in     vl_logic_vector(31 downto 0);
+        reg_number13    : in     vl_logic_vector(4 downto 0);
+        write13         : in     vl_logic
+    );
+end \register\;

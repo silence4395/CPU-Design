@@ -1,0 +1,26 @@
+package bigproject.translate;
+
+public class Level {
+
+	public Level parent = null;
+	public int depth = 0;
+	public static int MaxDepth = 0;
+	public int localnum = 0;
+	
+	public Level() {
+		depth = 0;
+	}
+	
+	public Level(Level a) {
+		parent = a;
+		depth = a.depth + 1;
+		if (depth > MaxDepth)
+			MaxDepth = depth;
+	}
+	
+	public Temp newLocal() {
+		localnum = localnum + 1;
+		return new Temp(this, localnum);
+	}
+	
+}

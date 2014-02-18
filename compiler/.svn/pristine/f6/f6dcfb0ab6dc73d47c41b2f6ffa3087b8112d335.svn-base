@@ -1,0 +1,25 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int printBoard(int sz, int** board) {
+    int i, j;
+    for (i = 0; i < sz; i++)
+        printf("%d ", board[i][0]);
+    printf("\n");
+    return 0;
+}
+
+int main() {
+    int N, i;
+    int* p2;
+    int** board;
+    N = 3;
+    p2 = malloc(N * sizeof(int));
+    p2[0] = 1;
+    for (i = 1; i <= N; i++) p2[i] = p2[i - 1] * 2;
+    board = malloc(p2[N] * sizeof(int*));
+    for (i = 0; i < p2[N]; i++)
+        board[i] = malloc(p2[N] * sizeof(int));
+    printBoard(p2[N], board);
+    return 0;
+}

@@ -1,0 +1,57 @@
+Label: cmain
+enter cmain, params are []
+t0 = Array size:3600
+t1 = Array size:3600
+t2 = Array size:3600
+t3 = 0
+Label: L12
+t6 = t3 < 30
+if t6 false goto L13
+t4 = 0
+Label: L14
+t7 = t4 < 30
+if t7 false goto L15
+t5 = 0
+Label: L16
+t8 = t5 < 30
+if t8 false goto L17
+t9 = t0
+t11 = 120
+t10 = t3 * t11
+t9 = t9 + t10
+t10 = t4 * 4
+t9 = t9 + t10
+t9 = t9[0]
+t13 = t1
+t15 = 120
+t14 = t4 * t15
+t13 = t13 + t14
+t14 = t5 * 4
+t13 = t13 + t14
+t13 = t13[0]
+t12 = t9 * t13
+t16 = t2
+t18 = 120
+t17 = t3 * t18
+t16 = t16 + t17
+t17 = t5 * 4
+t16 = t16 + t17
+t19 = t16[0]
+t19 = t19 + t12
+t16[0] = t19
+t20 = t5
+t5 = t5 + 1
+goto L16
+Label: L17
+t21 = t4
+t4 = t4 + 1
+goto L14
+Label: L15
+t22 = t3
+t3 = t3 + 1
+goto L12
+Label: L13
+return 0
+goto L11
+Label: L11
+leave cmain

@@ -1,0 +1,23 @@
+package bigproject.ast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Params extends Ast {
+	
+	public List<PlanDecl> parameters;
+	public boolean bdc;
+	
+	public Params() {
+		parameters = new ArrayList<PlanDecl>();
+		bdc = false;
+	}
+	
+	public void addParam(PlanDecl a) {
+		parameters.add(a);
+	}
+	
+	public void setBDC() {
+		bdc = true;
+	}
+}

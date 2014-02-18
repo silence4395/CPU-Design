@@ -1,0 +1,1036 @@
+package bigproject.translate;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
+
+import bigproject.ast.*;
+import bigproject.env.*;
+import bigproject.interm.*;
+import bigproject.symbol.Symbol;
+import bigproject.types.*;
+import bigproject.types.Record.RecordField;
+
+public class Translate {
+
+	private static final int[] opInverted = {
+		-1, -1, -1, OpExp.Or, OpExp.Xor, OpExp.And, OpExp.Equal,
+		OpExp.NotEqual, OpExp.Greater, OpExp.Less, OpExp.GreaterOrEqual,
+		OpExp.LessOrEqual, -1, -1, OpExp.Plus, -1, OpExp.Mult, -1, -1
+	};
+	private static final boolean[] isInvertable = {
+		false, false, false, true, true, true, true, true, true,
+		true, true, true, false, false, true, false, true, false, false
+	};
+	
+	public Env env = null;
+	
+	public Translate() {
+		env = new Env();
+	}
+	
+	public Translate(Env a) {
+		env = a;
+	}
+	
+	private Level level = new Level();
+	private Label returnlabel = null;
+	private Stack<Label> breaklabel = new Stack<Label>();
+	private Stack<Label> contlabel = new Stack<Label>();
+	public List<Interm> intermlist = new ArrayList<Interm>();
+	public List<CompUnit> units = new ArrayList<CompUnit>();
+	public List<DataFrag> frags = new ArrayList<DataFrag>();
+	
+	private void emit(Interm a) {
+		intermlist.add(a);
+	}
+	
+	private void emit(DataFrag a) {
+		frags.add(a);
+	}
+	
+	private void emit(CompUnit a) {
+		units.add(a);
+	}
+	
+	private class NameAndType {
+		public Symbol name;
+		public Type type;
+		public NameAndType(Symbol a, Type b) {
+			name = a;
+			type = b;
+		}
+		public void setType(Type a) {
+			type = a;
+		}
+	}
+	
+	private void error(String reason) {
+		System.out.println(reason);
+		System.exit(1);
+	}
+	
+	private Type conbine(Type target, Type s) {
+		Type result = target;
+		if (result == null)
+			result = s;
+		else if (result.actual() instanceof Function)
+			((Function) result.actual()).setReturnType(s);
+		else if (result.actual() instanceof Pointer)
+			((Pointer) result.actual()).bind(s);
+		return result;
+	}
+	
+	public void transProg(Program node) {
+		for (DeclStat decl: node.body) {
+			transDeclStat((DeclStat) decl);
+		}
+	}
+
+	private void transDeclStat(DeclStat node) {
+		if (node instanceof TypeDecl)
+			transDeclStat((TypeDecl) node);
+		if (node instanceof VarDecl)
+			transDeclStat((VarDecl) node);
+		if (node instanceof FunDecl)
+			transDeclStat((FunDecl) node);
+	}
+	
+	private void transDeclStat(TypeDecl node) {
+		Type type;
+		type = transTy(node.type);
+		List<NameAndType> symlist = transDeclors(node.decls);
+		for (int i=0; i<symlist.size(); i++) {
+			Type newtype = conbine(symlist.get(i).type, type);
+			env.typeenv.put(symlist.get(i).name, newtype);
+		}
+	}
+	
+	private List<NameAndType> transDeclors(Declors node) {
+		List<NameAndType> result = new ArrayList<NameAndType>();
+		for (Declor decl: node.body)
+			result.add(transDeclor(decl));
+		return result;
+	}
+
+	private NameAndType transDeclor(Declor node) {
+		if (node instanceof FunDeclor)
+			return transDeclor((FunDeclor) node);
+		if (node instanceof ArrayDeclor)
+			return transDeclor((ArrayDeclor) node);
+		return null;
+	}
+	
+	private NameAndType transDeclor(FunDeclor node) {
+		NameAndType result = null;
+		result = transPlanDeclor(node.name);
+		
+		Record parameters = transParams(node.parameters);
+		
+		Type returntype = result.type;
+		result.setType(new Function(parameters, returntype));
+		
+		return result;
+	}
+	
+	private Record transParams(Params node) {
+		if (node == null) 
+			return new Record();
+		List<NameAndType> list = new ArrayList<NameAndType>();
+		for (PlanDecl decl: node.parameters)
+			list.add(transPlanDecl(decl));
+		
+		Record result = new Record();
+		for (int i=0; i<list.size(); i++)
+			result.addField(list.get(i).name, list.get(i).type);
+		if (node.bdc)
+			result.addField(Symbol.symbol("..."), Type.Nil);
+		
+		return result;
+	}
+
+	private NameAndType transPlanDecl(PlanDecl node) {
+		Type type = transTy(node.type);
+		NameAndType result = transDeclor(node.decl);
+		result.type = conbine(result.type, type);
+		return result;
+	}
+
+	private NameAndType transPlanDeclor(PlanDeclor node) {
+		Type result = null;
+		for (int i=0; i<node.stars; i++) {
+			Pointer temp = new Pointer(result);
+			result = temp;
+		}
+		return new NameAndType(node.name, result);
+	}
+
+	private NameAndType transDeclor(ArrayDeclor node) {
+		NameAndType result = null;
+		result = transPlanDeclor(node.name);
+		
+		if (node.dim.size() == 0)
+			return result;
+		
+		Type array = null;
+		for (int i = node.dim.size()-1; i>=0; i--) {
+			Exp size = node.dim.get(i);
+			transExp(size);
+			Array temp = new Array(array, size.addr);
+			array = temp;
+		}
+
+		if (result.type == null)
+			result.setType(array);
+		else if (result.type instanceof Pointer)
+			((Pointer) result.type).bind(array);
+
+		return result;
+	}
+
+	private Type transTy(Ty node) {
+		if (node instanceof VoidTy)
+			return Type.Void;
+		if (node instanceof CharTy)
+			return Type.Char;
+		if (node instanceof IntTy)
+			return Type.Int;
+		if (node instanceof NameTy)
+			return (Type) env.typeenv.get(((NameTy) node).name);
+		if (node instanceof RecordTy)
+			return transTy((RecordTy) node);
+		return Type.Nil;
+	}
+
+	private Type transTy(RecordTy node) {
+		
+		if (node.name == null)
+			return transRecordField(node);
+		
+		Name result = new Name(node.name);
+		if (node.recordclass == 0)
+			result.setStruct();
+		else
+			result.setUnion();
+	
+		if ((node.types == null) && (node.decls == null)) {
+			Type anotherresult = (Type) env.typeenv.get(node.name);
+			if (anotherresult == null)
+				env.typeenv.put(node.name, result);
+			else
+				return anotherresult;
+			return result;
+		}
+		
+		Type t = (Type) env.typeenv.get(node.name);
+		if (t == null)
+			env.typeenv.put(node.name, result);
+		
+		Record field = transRecordField(node);
+
+		result = (Name) env.typeenv.get(node.name);
+		result.bind(field);
+		env.typeenv.setLevel(node.name);
+		
+		return result;
+	}
+
+	private Record transRecordField(RecordTy node) {
+		
+		Record result = null;
+		if (node.recordclass == 0)
+			result = new Struct();
+		else
+			result = new Union();
+		
+		Type fieldtype = null;
+		List<NameAndType> symlist = null;
+		for (int i=0; i<node.types.size(); i++) {
+			fieldtype = transTy(node.types.get(i));
+			symlist = transDeclors(node.decls.get(i));
+			for (int j=0; j<symlist.size(); j++)
+				result.addField(symlist.get(j).name, 
+								conbine(symlist.get(j).type, fieldtype));
+		}
+		
+		return result;
+	}
+
+	private void transDeclStat(VarDecl node) {
+		Type type = transTy(node.type);
+		if (node.initdecl != null)
+			transInitDeclors(node.initdecl, type);
+	}
+	
+	private void transInitDeclors(InitDeclors node, Type type) {
+		for (InitDeclor decl: node.decls)
+			transInitDeclor(decl, type);
+	}
+
+	private void transInitDeclor(InitDeclor node, Type type) {
+		NameAndType var = transDeclor(node.name);
+		var.type = conbine(var.type, type);
+
+		Temp temp = level.newLocal();
+		if ((var.type instanceof Array) ||
+			(var.type instanceof Record))
+			allocArray(temp, var.type);
+		env.varenv.put(var.name, new VarEntry(var.type, temp));
+		if (node.init != null)
+			transIniter(node.init, temp, true);
+		
+	}
+
+	private void allocArray(Temp addr, Type type) {
+		if (type instanceof Array)
+			allocArray(addr, (Array) type);
+		else if (type instanceof Struct)
+			allocArray(addr, (Struct) type);
+		else if (type instanceof Union)
+			allocArray(addr, (Union) type);
+	}
+	
+	private void allocArray(Temp addr, Array type) {
+		emit(makeBinOp(addr, OpExp.Mult, type.addr, new Const(4)));
+		emit(new Malloc(addr, addr));
+		
+		Type elementtype = type.elementtype.actual();
+		if ((elementtype instanceof Array) ||
+			(elementtype instanceof Record)) {
+			Temp tempaddr = level.newLocal();
+			if (type.capacity == -1) {
+				Temp i = level.newLocal();
+				Temp cmp = level.newLocal();
+				Label begin = new Label();
+				Label next = new Label();
+				emit(makeBinOp(i, OpExp.Mult, type.addr, new Const(4)));
+				emit(makeBinOp(i, OpExp.Plus, addr, i));
+				emit(makeBinOp(i, OpExp.Minus, i, new Const(4)));
+				emit(new LabelMark(begin));
+				emit(makeBinOp(cmp, OpExp.GreaterOrEqual, i, addr));
+				emit(new IfFalse(cmp, next));
+				allocArray(tempaddr, elementtype);
+				emit(new Store(i, new Const(0), tempaddr));
+				emit(makeBinOp(i, OpExp.Minus, i, new Const(4)));
+				emit(new Goto(begin));
+				emit(new LabelMark(next));
+			} else {
+				for (int i=0; i<type.capacity; i++) {
+					allocArray(tempaddr, elementtype);
+					emit(new Store(addr, new Const(i), tempaddr));
+				}
+			}
+		}
+		
+	}
+	
+	private void allocArray(Temp addr, Struct type) {
+		// TODO
+	}
+	
+	private void allocArray(Temp addr, Union type) {
+		// TODO
+	}
+	
+	private Temp getSize(Array type) {
+		Temp size = null;
+		if (type.elementtype.actual() instanceof Array) {
+			size = getSize((Array) type.elementtype.actual());
+			emit(makeBinOp(size, OpExp.Mult, size, type.addr));
+		} else if (type.elementtype.actual() instanceof Struct) {
+			size = getSize((Struct) type.elementtype.actual());
+			emit(makeBinOp(size, OpExp.Mult, size, type.addr));			
+		} else if (type.elementtype.actual() instanceof Union) {
+			size = getSize((Union) type.elementtype.actual());
+			emit(makeBinOp(size, OpExp.Mult, size, type.addr));
+		} else {
+			if (type.capacity == -1) {
+				size = makeTemp(new Const(4));
+				emit(makeBinOp(size, OpExp.Mult, size, type.addr));
+			} else {
+				size = makeTemp(new Const(4*type.capacity));
+			}
+		}
+		return size;
+	}
+
+	private Temp getSize(Struct type) {
+		return makeTemp(new Const(4*type.fields.size()));
+	}
+
+	private Temp getSize(Union type) {
+		return makeTemp(new Const(4));
+	}
+
+	private void transIniter(Initer node, Temp temp, boolean single) {
+		if (node.anotherbody == null) {
+			transExp(node.body);
+			if (single)
+				emit(makeMove(temp, node.body.addr));
+			else
+				emit(new Store(temp, new Const(0), makeTemp(node.body.addr)));
+		} else {
+			transIniters(node.anotherbody, temp);
+		}
+	}
+
+	private void transIniters(Initers node, Temp temp) {
+		for (int i=0; i<node.body.size(); i++) {
+			Initer initer = node.body.get(i);
+			Temp temp2 = level.newLocal();
+			emit(new Load(temp2, temp, new Const(i)));
+			transIniter(initer, temp2, false);
+		}
+	}
+
+	private void transDeclStat(FunDecl node) {
+		Type returntype = transTy(node.type);
+		NameAndType name = transPlanDeclor(node.name);
+		name.type = conbine(name.type, returntype);
+
+		Record parameters = transParams(node.parameters);
+		
+		Function fun = new Function(parameters, name.type);
+		Label funlabel = Label.forFun(name.name);
+		Level funlevel = new Level(level);
+		Level templevel = level;
+		level = funlevel;
+		if (!env.varenv.redeclAtSameLevel(name.name)) {
+			env.varenv.put(name.name, new FunEntry(fun, funlabel, level));
+		}
+		
+		List<Interm> templist = intermlist;
+		intermlist = new ArrayList<Interm>();
+		
+		env.beginScope();
+		emit(new LabelMark(funlabel));
+		returnlabel = new Label();
+		
+		List<Temp> params = new ArrayList<Temp>();
+		if (parameters != null)
+			for (RecordField field: parameters.fields) {
+				Temp t = level.newLocal();
+				params.add(t);
+				env.varenv.put(field.name, new VarEntry(field.type, t));
+			}
+		emit(new Enter(funlabel, level, params));
+	
+		transStat(node.body);
+		
+		emit(new LabelMark(returnlabel));
+		emit(new Leave(funlabel, level));
+		
+		emit(new CompUnit(intermlist, funlabel, level));
+		env.endScope();	
+		
+		level = templevel;
+		intermlist = templist;
+	}
+
+	private void transStat(CompStat node) {
+		for (DeclStat decl: node.declors)
+			transDeclStat(decl);
+		for (Stat stat: node.stats)
+			transStat(stat);
+	}
+
+	private void transStat(Stat node) {
+		if (node instanceof ExpStat)
+			transStat((ExpStat) node);
+		if (node instanceof CompStat) {
+			env.beginScope();
+			transStat((CompStat) node);
+			env.endScope();
+		}
+		if (node instanceof SelectStat)
+			transStat((SelectStat) node);
+		if (node instanceof WhileStat)
+			transStat((WhileStat) node);
+		if (node instanceof ForStat)
+			transStat((ForStat) node);
+		if (node instanceof JumpStat)
+			transStat((JumpStat) node);
+	}
+	
+	private void transStat(ExpStat node) {
+		if (node.body != null)
+			transExp(node.body);
+	}
+	
+	private void transStat(SelectStat node) {
+		Label next = new Label();
+		transExp(node.condition);
+		if (node.elseclause != null) {
+			Label other = new Label();
+			emit(new IfFalse(makeTemp(node.condition.addr), other));
+			transStat(node.thenclause);
+			emit(new Goto(next));
+			emit(new LabelMark(other));
+			transStat(node.elseclause);
+		} else {
+			emit(new IfFalse(makeTemp(node.condition.addr), next));
+			transStat(node.thenclause);
+		}
+		emit(new LabelMark(next));
+	}
+	
+	private Temp makeTemp(Addr a) {
+		if (a instanceof Temp)
+			return (Temp) a;
+		else {
+			Temp t = level.newLocal();
+			emit(makeMove(t, a));
+			return t;
+		}
+	}
+
+	private Interm makeMove(Temp t, Addr a) {
+		if (a instanceof Temp)
+			return new Move(t, (Temp) a);
+		else if (a instanceof Const)
+			return new MoveI(t, (Const) a);
+		else if (a instanceof Label)
+			return new MoveL(t, (Label) a);
+		else {
+			error("uncanny error!");
+			return null;
+		}
+	}
+
+	private void transStat(WhileStat node) {
+		Label begin = new Label();
+		Label next = new Label();
+		emit(new LabelMark(begin));
+		transExp(node.condition);
+		emit(new IfFalse(makeTemp(node.condition.addr), next));
+		breaklabel.push(next);
+		contlabel.push(begin);
+		transStat(node.body);
+		breaklabel.pop();
+		contlabel.pop();
+		emit(new Goto(begin));
+		emit(new LabelMark(next));
+	}
+	
+	private void transStat(ForStat node) {
+		if (node.firstcond != null)
+			transExp(node.firstcond);
+		Label begin = new Label();
+		Label next = new Label();
+		emit(new LabelMark(begin));
+		if (node.secondcond != null) {
+			transExp(node.secondcond);
+			emit(new IfFalse(makeTemp(node.secondcond.addr), next));
+		}
+		breaklabel.push(next);
+		contlabel.push(begin);
+		transStat(node.body);
+		breaklabel.pop();
+		contlabel.pop();
+		if (node.thirdcond != null)
+			transExp(node.thirdcond);
+		emit(new Goto(begin));
+		emit(new LabelMark(next));
+	}
+	
+	private void transStat(JumpStat node) {
+		if (node instanceof BreakStat)
+			emit(new Goto(breaklabel.peek()));
+		else if (node instanceof ContinueStat)
+			emit(new Goto(contlabel.peek()));
+		else if (node instanceof ReturnStat) {
+			Exp result = ((ReturnStat) node).result;
+			if (result != null)
+				transExp(result);
+			emit(new Return(level, result.addr));
+			emit(new Goto(returnlabel));
+		}
+	}
+	
+	private Type transExp(Exp node) {
+		return transExp(node, false);
+	}
+	
+	private Type transExp(Exp node, boolean lv) {
+		if (node instanceof CommaExp)
+			return transExp((CommaExp) node, lv);
+		if (node instanceof AssignExp)
+			return transExp((AssignExp) node, lv);
+		if (node instanceof OpExp)
+			return transExp((OpExp) node, lv);
+		if (node instanceof CoerceExp)
+			return transExp((CoerceExp) node, lv);
+		if (node instanceof SingleOpExp)
+			return transExp((SingleOpExp) node, lv);
+		if (node instanceof SizeofExp)
+			return transExp((SizeofExp) node, lv);
+		if (node instanceof PostfixExp)
+			return transExp((PostfixExp) node, lv);
+		if (node instanceof VarExp)
+			return transExp((VarExp) node, lv);
+		if (node instanceof StringExp)
+			return transExp((StringExp) node, lv);
+		if (node instanceof IntExp)
+			return transExp((IntExp) node, lv);
+		if (node instanceof CharExp)
+			return transExp((CharExp) node, lv);
+		return Type.Nil;
+	}
+	
+	private Type transExp(CharExp node, boolean lv) {
+		node.addr = new Const(node.value);
+		return Type.Char;
+	}
+
+	private Type transExp(IntExp node, boolean lv) {
+		node.addr = new Const(node.value);
+		return Type.Int;
+	}
+
+	private Type transExp(StringExp node, boolean lv) {
+		node.addr = new Label();
+		node.body = node.body.substring(1, node.body.length()-1);
+		emit(new DataFrag((Label) node.addr, node.body));
+		return new Pointer(Type.Char);
+	}
+
+	private Type transExp(VarExp node, boolean lv) {
+		Entry var = (Entry) env.varenv.get(node.name);
+		if (var instanceof VarEntry)
+			node.addr = ((VarEntry) var).temp;
+		else if (var instanceof FunEntry)
+			node.addr = ((FunEntry) var).label;
+		else {
+			error("Unknown Entry in varenv! ");
+			return null;
+		}
+		return var.type;
+	}
+
+	private Type transExp(PostfixExp node, boolean lv) {
+		if (node.postfixes.size() == 0) {
+			Type type = transExp(node.body, lv);
+			node.addr = node.body.addr;
+			return type;
+		}
+		
+		Type type = transExp(node.body, lv);
+		Postfix firstfix = node.postfixes.get(0);
+
+		// FunFix
+		if (node.body.addr instanceof Label) { 
+			node.addr = node.body.addr;
+			List<Temp> params = transArguments(((FunFix) firstfix).argus);
+			if (node.addr instanceof Label) {
+				if (((Function) type).returntype == Type.Void) {
+					emit(new CallProc((Label) node.addr, params));
+				} else {
+					Temp temp = level.newLocal();
+					emit(new CallFun(temp, (Label) node.addr, params));
+					node.addr = temp;
+				}
+			} else 
+				error("FunEntry needed!");
+			type = ((Function) type).returntype;
+			return type;
+		}
+		
+		// Single ++/--
+		if (firstfix instanceof DuPlusFix) {
+			node.addr = node.body.addr;
+			Temp temp = level.newLocal();
+			emit(makeMove(temp, node.addr));
+			emit(makeBinOp((Temp) node.addr, OpExp.Plus, node.addr, new Const(1)));
+			node.addr = temp;
+			return type;
+		} else if (firstfix instanceof DuMinusFix) {
+			node.addr = node.body.addr;
+			Temp temp = level.newLocal();
+			emit(makeMove(temp, node.addr));
+			emit(makeBinOp((Temp) node.addr, OpExp.Minus, node.addr, new Const(1)));
+			node.addr = temp;
+			return type;			
+		}
+		
+		Temp result = level.newLocal();
+		emit(makeMove(result, node.body.addr));
+		for (int i=0; i < node.postfixes.size() - 1; i++) {
+			Postfix postfix = node.postfixes.get(i);
+			if (postfix instanceof ArrayFix) {
+				if ((node.postfixes.get(i+1) instanceof DuPlusFix) ||
+					(node.postfixes.get(i+1) instanceof DuMinusFix)) {
+					ArrayFix arrayfix = (ArrayFix) postfix;
+					transExp(arrayfix.body);
+					type = ((Pointer) type.actual()).elementtype.actual();
+					if (arrayfix.body.addr instanceof Const) {
+						int value = ((Const) arrayfix.body.addr).value;
+						emit(makeBinOp(result, OpExp.Plus, result, new Const(value*4)));
+					} else {
+						Temp offset = level.newLocal();
+						emit(makeBinOp(offset, OpExp.Mult, arrayfix.body.addr, new Const(4)));
+						emit(makeBinOp(result, OpExp.Plus, result, offset));
+					}					
+				} else if (node.postfixes.get(i+1) instanceof FieldFix) {
+					ArrayFix arrayfix = (ArrayFix) postfix;
+					transExp(arrayfix.body);
+					type = ((Pointer) type.actual()).elementtype.actual();
+					Temp size = null;
+					if (type instanceof Struct)
+						size = getSize((Struct) type);
+					if (type instanceof Union)
+						size = getSize((Union) type);
+					if (arrayfix.body.addr instanceof Const) {
+						int value = ((Const) arrayfix.body.addr).value;
+						emit(makeBinOp(size, OpExp.Mult, size, new Const(value)));
+						emit(makeBinOp(result, OpExp.Plus, result, size));
+					} else {
+						emit(makeBinOp(size, OpExp.Mult, arrayfix.body.addr, size));
+						emit(makeBinOp(result, OpExp.Plus, result, size));
+					}	
+				} else {
+					ArrayFix arrayfix = (ArrayFix) postfix;
+					transExp(arrayfix.body);
+					type = ((Pointer) type.actual()).elementtype.actual();
+					if (arrayfix.body.addr instanceof Const)
+						emit(new Load(result, result, (Const) arrayfix.body.addr));
+					else {
+						Temp offset = level.newLocal();
+						Temp address = level.newLocal();
+						emit(makeBinOp(offset, OpExp.Mult, arrayfix.body.addr, new Const(4)));
+						emit(makeBinOp(address, OpExp.Plus, result, offset));
+						emit(new Load(result, address, new Const(0)));
+					}
+				}
+			} else if (postfix instanceof FieldFix) {
+				Record rec = (Record) type.actual();
+				int index = rec.getFieldIndex(((FieldFix) postfix).name);
+				emit(new Load(result, result, new Const(index)));
+				type = rec.getField(((FieldFix) postfix).name);	
+			} else if (postfix instanceof BelongFix) {
+				Record rec = (Record) ((Pointer) type.actual()).elementtype.actual();
+				int index = rec.getFieldIndex(((BelongFix) postfix).name);
+				emit(new Load(result, result, new Const(0)));
+				emit(new Load(result, result, new Const(index)));
+				type = rec.getField(((BelongFix) postfix).name);
+			}
+		}
+		
+		if (lv) {
+			
+			Postfix postfix = node.postfixes.get(node.postfixes.size()-1);
+			Temp offset = level.newLocal();
+			if (postfix instanceof ArrayFix) {
+				ArrayFix arrayfix = (ArrayFix) postfix;
+				transExp(arrayfix.body);
+				type = ((Pointer) type.actual()).elementtype.actual();
+				if (arrayfix.body.addr instanceof Const) {
+					int value = ((Const) arrayfix.body.addr).value;
+					emit(makeBinOp(result, OpExp.Plus, result, new Const(value*4)));
+				} else {
+					emit(makeBinOp(offset, OpExp.Mult, arrayfix.body.addr, new Const(4)));
+					emit(makeBinOp(result, OpExp.Plus, result, offset));
+				}
+			} else if (postfix instanceof FieldFix) {
+				Record rec = (Record) type.actual();
+				int index = rec.getFieldIndex(((FieldFix) postfix).name);
+				emit(makeBinOp(offset, OpExp.Mult, new Const(index), new Const(4)));
+				emit(makeBinOp(result, OpExp.Plus, result, offset));
+				type = rec.getField(((FieldFix) postfix).name);	
+			} else if (postfix instanceof BelongFix) {
+				Record rec = (Record) ((Pointer) type.actual()).elementtype.actual();
+				int index = rec.getFieldIndex(((BelongFix) postfix).name);
+				emit(makeBinOp(offset, OpExp.Mult, new Const(index), new Const(4)));
+				emit(makeBinOp(result, OpExp.Plus, result, offset));
+				type = rec.getField(((BelongFix) postfix).name);
+			}
+			node.addr = result;
+			((Temp) node.addr).isaddress = true;
+			return type;
+			
+		} else {
+			
+			Postfix postfix = node.postfixes.get(node.postfixes.size()-1);
+			if (postfix instanceof ArrayFix) {
+				ArrayFix arrayfix = (ArrayFix) postfix;
+				transExp(arrayfix.body);
+				type = ((Pointer) type.actual()).elementtype.actual();
+				if (arrayfix.body.addr instanceof Const)
+					emit(new Load(result, result, (Const) arrayfix.body.addr));
+				else {
+					Temp offset = level.newLocal();
+					Temp address = level.newLocal();
+					emit(makeBinOp(offset, OpExp.Mult, arrayfix.body.addr, new Const(4)));
+					emit(makeBinOp(address, OpExp.Plus, result, offset));
+					emit(new Load(result, address, new Const(0)));
+				}
+			}  else if (postfix instanceof FieldFix) {
+				Record rec = (Record) type.actual();
+				int index = rec.getFieldIndex(((FieldFix) postfix).name);
+				emit(new Load(result, result, new Const(index)));
+				type = rec.getField(((FieldFix) postfix).name);	
+			} else if (postfix instanceof BelongFix) {
+				Record rec = (Record) ((Pointer) type.actual()).elementtype.actual();
+				int index = rec.getFieldIndex(((BelongFix) postfix).name);
+				emit(new Load(result, result, new Const(0)));
+				emit(new Load(result, result, new Const(index)));
+				type = rec.getField(((BelongFix) postfix).name);
+			} else if (postfix instanceof DuPlusFix) {
+				Temp temp = level.newLocal();
+				emit(new Load(temp, result, new Const(0)));
+				emit(makeBinOp(temp, OpExp.Plus, temp, new Const(1)));
+				emit(new Store(result, new Const(0), temp));
+				result = temp;
+			} else if (postfix instanceof DuMinusFix) {
+				Temp temp = level.newLocal();
+				emit(new Load(temp, result, new Const(0)));
+				emit(makeBinOp(temp, OpExp.Minus, temp, new Const(1)));
+				emit(new Store(result, new Const(0), temp));
+				result = temp;
+			}
+			node.addr = result;
+
+		}
+		
+		return type;
+		
+	}
+
+	private List<Temp> transArguments(Arguments node) {
+		if (node == null)
+			return new ArrayList<Temp>();
+		List<Temp> result = new ArrayList<Temp>();
+		for (Exp exp: node.argus) {
+			transExp(exp);
+			result.add(makeTemp(exp.addr));
+		}
+		return result;
+	}
+
+	private Interm makeBinOp(Temp dest, int op, Addr addr1, Addr addr2) {
+		if (addr1 instanceof Const && addr2 instanceof Const) {
+			int a1 = ((Const) addr1).value;
+			int a2 = ((Const) addr2).value;
+			if (!(op == OpExp.Div && a2 == 0))
+				return new MoveI(dest, new Const(calculate(op, a1, a2)));
+		}
+		if ((addr1 instanceof Const) && (addr2 instanceof Temp) && (isInvertable[op])) {
+			return makeBinOp(dest, opInverted[op], addr2, addr1);
+		}
+		if (addr2 instanceof Const) {
+			Temp left = makeTemp(addr1);
+			return new BinOpI(dest, op, left, (Const) addr2);
+		}
+		Temp left = makeTemp(addr1);
+		Temp right = makeTemp(addr2);
+		return new BinOp(dest, op, left, right);
+	}
+
+	private int calculate(int op, int a1, int a2) {
+		int[] results = {
+			0, toInt((a1>0) || (a2>0)), toInt((a1>0) && (a2>0)),
+			a1 | a2, a1 ^ a2, a1 & a2, toInt(a1 == a2),
+			toInt(a1 != a2), toInt(a1 < a2), toInt(a1 > a2),
+			toInt(a1 <= a2), toInt(a1 >= a2), a1 << a2, a1 >> a2,
+			a1 + a2, a1 - a2, a1 * a2, a1 / a2, a1 % a2
+		};
+		return results[op];
+	}
+
+	private int toInt(boolean a) {
+		if (a)
+			return 1;
+		else 
+			return 0;
+	}
+
+	private Type transExp(SizeofExp node, boolean lv) {
+		Type type = null;
+		if (node.body == null)
+			type = transTy(node.type);
+		if (node.type == null)
+			type = transExp(node.body);
+		if (node.stars > 0)
+			type = new Pointer(type);
+		if (type.actual() instanceof Array) {
+			node.addr = getSize((Array) type.actual());
+		} else if (type.actual() instanceof Struct) {
+			node.addr = getSize((Struct) type.actual());
+		} else if (type.actual() instanceof Union) {
+			node.addr = getSize((Union) type.actual());
+		} else
+			node.addr = new Const(type.size() * 4);
+		return Type.Int;
+	}
+
+	private Type transExp(SingleOpExp node, boolean lv) {
+		Type type = null;
+		Temp temp = level.newLocal();
+		if (node.op == SingleOpExp.DuPlus) {
+			transExp(node.body, false);
+			Temp temp2 = makeTemp(node.body.addr); 
+			type = transExp(node.body, true);
+			emit(makeBinOp(temp, OpExp.Plus, temp2, new Const(1)));
+			if (((Temp) node.body.addr).isaddress)
+				emit(new Store((Temp) node.body.addr, new Const(0), makeTemp(temp)));
+			else
+				emit(makeMove((Temp) node.body.addr, temp));
+		} else if (node.op == SingleOpExp.DuMinus) {
+			transExp(node.body, false);
+			Temp temp2 = makeTemp(node.body.addr); 
+			type = transExp(node.body, true);
+			emit(makeBinOp(temp, OpExp.Minus, temp2, new Const(1)));
+			if (((Temp) node.body.addr).isaddress)
+				emit(new Store((Temp) node.body.addr, new Const(0), makeTemp(temp)));
+			else
+				emit(makeMove((Temp) node.body.addr, temp));
+		} else if (node.op == SingleOpExp.At) {
+			type = transExp(node.body);
+			emit(new AssignAddress(temp, makeTemp(node.body.addr)));
+			type = new Pointer(type);
+		} else if (node.op == SingleOpExp.Star) {
+			type = transExp(node.body);
+			if (lv)
+				emit(makeMove(temp, node.body.addr));
+			else
+				emit(new Load(temp, makeTemp(node.body.addr), new Const(0)));
+			type = ((Pointer) type).elementtype.actual();
+			temp.isaddress = true;
+		} else if (node.op == SingleOpExp.Plus) {
+			type = transExp(node.body);
+			// do nothing -_-b
+		} else if (node.op == SingleOpExp.Minus) {
+			type = transExp(node.body);
+			emit(makeBinOp(temp, OpExp.Minus, new Const(0), node.body.addr));
+		} else if (node.op == SingleOpExp.Swung) {
+			type = transExp(node.body);
+			// TODO ~
+		} else if (node.op == SingleOpExp.Excal) {
+			type = transExp(node.body);
+			emit(makeBinOp(temp, OpExp.Xor, node.body.addr, new Const(0)));
+		}
+		node.addr = temp;
+		return type;
+	}
+
+	private Type transExp(CommaExp node, boolean lv) {
+		Type result = null;
+		for (Exp eachexp: node.exps) {
+			result = transExp(eachexp, lv);
+			node.addr = eachexp.addr;
+		}
+		return result;
+	}
+
+	private Type transExp(AssignExp node, boolean lv) {
+		Type type = transExp(node.right);
+		
+		if (node.op == AssignExp.Assign) {
+			transExp(node.left, true);
+			if (((Temp) node.left.addr).isaddress)
+				emit(new Store((Temp) node.left.addr, new Const(0), makeTemp(node.right.addr)));
+			else
+				emit(makeMove((Temp) node.left.addr, node.right.addr));
+			node.addr = node.right.addr;
+			return type;
+		}
+		
+		transExp(node.left, false);
+		Temp temp = makeTemp(node.left.addr);
+		transExp(node.left, true);
+		int[] binops = {
+						0, OpExp.Mult, OpExp.Div, OpExp.Mod,
+						OpExp.Plus, OpExp.Minus, OpExp.Shl, OpExp.Shr,
+						OpExp.And, OpExp.Xor, OpExp.Or
+		};
+		emit(makeBinOp(temp, binops[node.op], temp, node.right.addr));
+		if (((Temp) node.left.addr).isaddress)
+			emit(new Store((Temp) node.left.addr, new Const(0), temp));
+
+		return type;
+	}
+	
+	private Type transExp(OpExp node, boolean lv) {
+		if (node.explist.size() == 1) {
+			Exp exp = node.explist.get(0);
+			Type type = transExp(exp, lv);
+			node.addr = exp.addr;
+			return type;
+		}
+		
+		if (node.op == OpExp.LogicalAnd) {
+			Exp firstexp = node.explist.get(0); 
+			transExp(firstexp);
+			Temp temp1 = level.newLocal();
+			emit(makeBinOp(temp1, OpExp.Greater, firstexp.addr, new Const(0)));
+			Label label = new Label();
+			Label label2 = new Label();
+			emit(new IfFalse(temp1, label2));
+			for (int i=1; i<node.explist.size(); i++) {
+				Exp exp = node.explist.get(i);
+				transExp(exp);
+				emit(makeBinOp(temp1, OpExp.Greater, exp.addr, new Const(0)));
+				if (i != node.explist.size()-1)
+					emit(new IfFalse(temp1, label2));
+				else
+					emit(new Goto(label));
+			}
+			emit(new LabelMark(label2));
+			emit(makeMove(temp1, new Const(0)));
+			emit(new LabelMark(label));
+			node.addr = temp1;
+			return Type.Int;
+		}
+		
+		if (node.op == OpExp.LogicalOr) {
+			Exp firstexp = node.explist.get(0); 
+			transExp(firstexp);
+			Temp temp1 = level.newLocal();
+			emit(makeBinOp(temp1, OpExp.Equal, firstexp.addr, new Const(0)));
+			Label label = new Label();
+			Label label2 = new Label();
+			emit(new IfFalse(temp1, label2));
+			for (int i=1; i<node.explist.size(); i++) {
+				Exp exp = node.explist.get(i);
+				transExp(exp);
+				emit(makeBinOp(temp1, OpExp.Equal, exp.addr, new Const(0)));
+				if (i != node.explist.size()-1)
+					emit(new IfFalse(temp1, label2));
+				else
+					emit(new Goto(label));
+			}
+			emit(new LabelMark(label2));
+			emit(makeMove(temp1, new Const(1)));
+			emit(new LabelMark(label));
+			node.addr = temp1;
+			return Type.Int;			
+		}
+		
+		Exp firstexp = node.explist.get(0); 
+		Type type = transExp(firstexp);
+		Addr pre = firstexp.addr;
+		Temp temp = level.newLocal();
+		for (int i=1; i<node.explist.size(); i++) {
+			Exp exp = node.explist.get(i);
+			transExp(exp);
+			if (node.oplist == null)
+				emit(makeBinOp(temp, node.op, pre, exp.addr));
+			else
+				emit(makeBinOp(temp, node.oplist.get(i-1), pre, exp.addr));
+			pre = temp;
+		}
+		node.addr = temp;
+		return type;
+	}
+
+	private Type transExp(CoerceExp node, boolean lv) {
+		Type goal = transTy(node.type);
+		for (int i=0; i<node.stars; i++) {
+			Pointer temp = new Pointer(goal);
+			goal = temp;
+		}
+		Type source = transExp(node.body);
+		source = goal.actual();
+		return source;
+	}
+	
+}

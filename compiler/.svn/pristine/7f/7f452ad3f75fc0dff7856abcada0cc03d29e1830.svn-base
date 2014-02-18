@@ -1,0 +1,10 @@
+package bigproject.types;
+
+import bigproject.symbol.*;
+
+public class Name extends Type {
+
+	public Symbol name;
+	public Type acttype;
+	
+}

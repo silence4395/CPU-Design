@@ -1,0 +1,33 @@
+Label: L7_inline1
+enter L7_inline1, params are [t0]
+t1 = L9
+call printf[t1, t0]
+return 1
+goto L8
+Label: L8
+leave L7_inline1
+Label: L10_inline2
+enter L10_inline2, params are [t2, t3]
+t4 = call L7_inline1[t3]
+t2 = 1
+return 1
+goto L11
+Label: L11
+leave L10_inline2
+Label: cmain
+enter cmain, params are []
+t5 = 0
+t6 = L14
+call printf[t6, t5]
+t7 = 9
+t8 = call L10_inline2[t7, t5]
+t9 = L15
+call printf[t9, t5]
+t5 = 2
+t10 = call L7_inline1[t5]
+t11 = L16
+call printf[t11, t5]
+return 0
+goto L13
+Label: L13
+leave cmain

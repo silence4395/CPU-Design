@@ -1,0 +1,17 @@
+package bigproject.ast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Initers extends Ast {
+
+	public List<Initer> body;
+	
+	public Initers() {
+		body = new ArrayList<Initer>();
+	}
+	
+	public void addIniter(Initer a) {
+		body.add(a);
+	}
+}

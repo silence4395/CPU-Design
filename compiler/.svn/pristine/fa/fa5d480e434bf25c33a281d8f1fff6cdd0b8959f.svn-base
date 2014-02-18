@@ -1,0 +1,386 @@
+grammar CTX;
+
+@header {
+package bigproject.syntactic;
+import bigproject.ast.*;
+}
+
+@parser::members {
+	static bigproject.symbol.Symbol symbol(String s) {
+		return bigproject.symbol.Symbol.symbol(s);
+	}
+}
+
+program returns [Program v]
+		: {$v = new Program();}
+		  (a=declaration {$v.addDecl($a.v);} | b=function_definition {$v.addDecl($b.v);})+
+		;
+
+declaration returns [DeclStat v]
+		: 'typedef' a=type_specifier b=declarators ';'
+		  {$v = new TypeDecl($a.v, $b.v);}
+		| c=type_specifier ';'
+		  {$v = new VarDecl($c.v);}
+		| d=type_specifier e=init_declarators ';'
+		  {$v = new VarDecl($d.v, $e.v);}
+		;
+
+function_definition returns [FunDecl v]
+		: a=type_specifier b=plain_declarator '(' ')' c=compound_statement
+		  {$v = new FunDecl($a.v, $b.v, $c.v);}
+		| d=type_specifier e=plain_declarator '(' f=parameters ')' g=compound_statement
+		  {$v = new FunDecl($d.v, $e.v, $f.v, $g.v);}
+		;
+
+parameters returns [Params v]
+		: {$v = new Params();} a=plain_declaration {$v.addParam($a.v);}
+		  (',' b=plain_declaration {$v.addParam($b.v);})*
+		| {$v = new Params();} c=plain_declaration {$v.addParam($c.v);}
+		  (',' d=plain_declaration {$v.addParam($d.v);})* ',' '...' {$v.setBDC();}
+		;
+
+declarators returns [Declors v]
+		: {$v = new Declors();} a=declarator {$v.addDecl($a.v);}
+		  (',' b=declarator {$v.addDecl($b.v);})*
+		;
+
+init_declarators returns [InitDeclors v]
+		: {$v = new InitDeclors();} a=init_declarator {$v.addInitDecl($a.v);}
+		  (',' b=init_declarator {$v.addInitDecl($b.v);})*
+		;
+
+init_declarator returns [InitDeclor v]
+		: a=declarator {$v = new InitDeclor($a.v);}
+		| b=declarator '=' c=initializer {$v = new InitDeclor($b.v, $c.v);}
+		;
+
+initializer returns [Initer v]
+		: a=assignment_expression {$v = new Initer($a.v);}
+		| '{' b=initializers {$v = new Initer($b.v);} '}'
+		;
+
+initializers returns [Initers v]
+		: {$v = new Initers();} 
+		  a=initializer {$v.addIniter($a.v);}
+		  (',' b=initializer {$v.addIniter($b.v);})*
+		;
+
+type_specifier returns [Ty v]
+		: 'void' {$v = new VoidTy();}
+		| 'char' {$v = new CharTy();}
+		| 'int' {$v = new IntTy();}
+		| a=typedef_name {$v = new NameTy(symbol($a.v));}
+		| {$v = new RecordTy();} b=struct_or_union {$v.setClass($b.v);} 
+		  '{' (c=type_specifier {$v.addTy($c.v);} d=declarators {$v.addDecls($d.v);} ';')+ '}'
+		| {$v = new RecordTy();} e=struct_or_union {$v.setClass($e.v);}
+		  f=identifier {$v.setName(symbol($f.v));}
+		  '{' (g=type_specifier {$v.addTy($g.v);} h=declarators {$v.addDecls($h.v);} ';')+ '}'
+		| {$v = new RecordTy();} i=struct_or_union {$v.setClass($i.v);}
+		  j=identifier {$v.setName(symbol($j.v));}
+		;
+
+struct_or_union returns [int v]
+		: 'struct' {$v = 0;}
+		| 'union' {$v = 1;}
+		;
+
+plain_declaration returns [PlanDecl v]
+		: a=type_specifier b=declarator {$v = new PlanDecl($a.v, $b.v);}
+		;
+
+declarator returns [Declor v]
+		: a=plain_declarator '(' ')' {$v = new FunDeclor($a.v);}
+		| b=plain_declarator '(' c=parameters ')'
+		  {$v = new FunDeclor($b.v, $c.v);}
+		| d=plain_declarator {$v = new VarDeclor($d.v);}
+		| e=plain_declarator {$v = new ArrayDeclor($e.v);}
+		  ('[' f=constant_expression ']' {$v.addDim($f.v);} )+
+		;
+
+plain_declarator returns [PlanDeclor v]
+		: {$v = new PlanDeclor();} ('*' {$v.addStar();})* 
+		  a=identifier {$v.setName(symbol($a.v));}
+		;
+
+statement returns [Stat v]
+		: a=expression_statement {$v = $a.v;}
+		| b=compound_statement {$v = $b.v;}
+		| c=selection_statement {$v = $c.v;}
+		| d=while_statement {$v = $d.v;}
+		| e=for_statement {$v = $e.v;}
+		| f=jump_statement {$v = $f.v;}
+		;
+
+expression_statement returns [ExpStat v]
+		: ';' {$v = null;}
+		| a=expression ';' {$v = new ExpStat($a.v);} 
+		;
+
+compound_statement returns [CompStat v]
+		: {$v = new CompStat();} '{'
+		  (a=declaration {$v.addDecl($a.v);})*
+		  (b=statement {$v.addStat($b.v);})* '}'
+		;
+
+selection_statement returns [SelectStat v]
+		: 'if' '(' a=expression ')' b=statement
+		  {$v = new SelectStat($a.v, $b.v);}
+		| 'if' '(' c=expression ')' d=statement 'else' e=statement
+		  {$v = new SelectStat($c.v, $d.v, $e.v);}
+		;
+
+while_statement returns [WhileStat v]
+		: 'while' '(' a=expression ')' b=statement
+		  {$v = new WhileStat($a.v, $b.v);}
+		;
+		
+for_statement returns [ForStat v]
+		: {$v = new ForStat();} 'for' '('
+		  (a=expression {$v.setFirstCond($a.v);})? ';'
+		  (b=expression {$v.setSecondCond($b.v);})? ';'
+		  (c=expression {$v.setThirdCond($c.v);})? ')'
+		  d=statement {$v.setBody($d.v);}
+		;
+
+jump_statement returns [JumpStat v]
+		: 'continue' ';' {$v = new ContinueStat();}
+		| 'break' ';' {$v = new BreakStat();}
+		| 'return' ';' {$v = new ReturnStat();}
+		| 'return' a=expression ';' {$v = new ReturnStat($a.v);}
+		;
+
+expression returns [Exp v]
+		: a=assignment_expression {$v = $a.v;}
+		| b=assignment_expression ',' c=expression 
+		  {$v = new OpExp($b.v, OpExp.Comma, $c.v);}
+		;
+
+assignment_expression returns [Exp v]
+		: a=logical_or_expression {$v = $a.v;}
+		| b=unary_expression c=assignment_operator d=assignment_expression
+		  {$v = new OpExp($b.v, $c.v, $d.v);}
+		;
+
+assignment_operator returns [int v]
+		: '=' {$v = 1;}
+		| '*=' {$v = 2;}
+		| '/=' {$v = 3;}
+		| '%=' {$v = 4;}
+		| '+=' {$v = 5;} 
+		| '-=' {$v = 6;}
+		| '<<=' {$v = 7;}
+		| '>>=' {$v = 8;}
+		| '&=' {$v = 9;}
+		| '^=' {$v = 10;}
+		| '|=' {$v = 11;}
+		;
+
+constant_expression returns [Exp v]
+		: a=logical_or_expression {$v = $a.v;}
+		;
+
+logical_or_expression returns [Exp v]
+		: a=logical_and_expression {$v = $a.v;}
+		| b=logical_and_expression '||' c=logical_or_expression
+		  {$v = new OpExp($b.v, OpExp.LogicalOr, $c.v);}
+		;
+
+logical_and_expression returns [Exp v]
+		: a=inclusive_or_expression {$v = $a.v;}
+		| b=inclusive_or_expression '&&' c=logical_and_expression
+		  {$v = new OpExp($b.v, OpExp.LogicalAnd, $c.v);}
+		;
+
+inclusive_or_expression returns [Exp v]
+		: a=exclusive_or_expression {$v = $a.v;}
+		| b=exclusive_or_expression '|' c=inclusive_or_expression
+		  {$v = new OpExp($b.v, OpExp.Or, $c.v);}
+		;
+
+exclusive_or_expression returns [Exp v]
+		: a=and_expression {$v = $a.v;}
+		| b=and_expression '^' c=exclusive_or_expression
+		  {$v = new OpExp($b.v, OpExp.Xor, $c.v);}
+		;
+
+and_expression returns [Exp v]
+		: a=equality_expression {$v = $a.v;}
+		| b=equality_expression '&' c=and_expression
+		  {$v= new OpExp($b.v, OpExp.And, $c.v);}
+		;
+
+equality_expression returns [Exp v]
+		: a=relational_expression {$v = $a.v;}
+		| b=relational_expression c=equality_operator d=equality_expression
+		  {$v = new OpExp($b.v, $c.v, $d.v);}
+		;
+
+equality_operator returns [int v]
+		: '==' {$v = 17;} 
+		| '!=' {$v = 18;}
+		;
+
+relational_expression returns [Exp v]
+		: a=shift_expression {$v = $a.v;}
+		| b=shift_expression c=relational_operator d=relational_expression
+		  {$v = new OpExp($b.v, $c.v, $d.v);}
+		;
+
+relational_operator returns [int v]
+		: '<' {$v = 19;}
+		| '>' {$v = 20;}
+		| '<=' {$v = 21;}
+		| '>=' {$v = 22;}
+		;
+
+shift_expression returns [Exp v]
+		: a=additive_expression {$v = $a.v;}
+		| b=additive_expression c=shift_operator d=shift_expression
+		  {$v = new OpExp($b.v, $c.v, $d.v);}
+		;
+
+shift_operator returns [int v]
+		: '<<' {$v = 23;}
+		| '>>' {$v = 24;}
+		;
+
+additive_expression returns [Exp v]
+		: a=multiplicative_expression {$v = $a.v;}
+		| b=multiplicative_expression c=additive_operator d=additive_expression
+		  {$v = new OpExp($b.v, $c.v, $d.v);}
+		;
+
+additive_operator returns [int v]
+		: '+' {$v = 25;}
+		| '-' {$v = 26;}
+		;
+
+multiplicative_expression returns [Exp v]
+		: a=cast_expression {$v = $a.v;}
+		| b=cast_expression c=multiplicative_operator d=multiplicative_expression
+		  {$v = new OpExp($b.v, $c.v, $d.v);}
+		;
+
+multiplicative_operator returns [int v]
+		: '*' {$v = 27;}
+		| '/' {$v = 28;}
+		| '%' {$v = 29;}
+		;
+
+cast_expression returns [Exp v]
+		: a=unary_expression {$v = $a.v;}
+		| '(' b=type_name ')' c=cast_expression
+		  {$v = new CoerceExp($b.v, $b.u, $c.v);}
+		;
+
+type_name returns [Ty v, int u]
+		: a=type_specifier {$v = $a.v; $u = 0;} ('*' {$u = $u + 1;})* 
+		;
+
+unary_expression returns [Exp v]
+		: a=postfix_expression {$v = $a.v;}
+		| '++' b=unary_expression {$v = new SingleOpExp($b.v, SingleOpExp.DuPlus);}
+		| '--' c=unary_expression {$v = new SingleOpExp($c.v, SingleOpExp.DuMinus);}
+		| d=unary_operator e=cast_expression
+		  {$v = new SingleOpExp($e.v, $d.v);}
+		| 'sizeof' f=unary_expression {$v = new SizeofExp($f.v);}
+		| 'sizeof' '(' g=type_name ')' {$v = new SizeofExp($g.v, $g.u);}
+		;
+
+unary_operator returns [int v]
+		: '&' {$v = 2;}
+		| '*' {$v = 3;}
+		| '+' {$v = 4;}
+		| '-' {$v = 5;}
+		| '~' {$v = 6;}
+		| '!' {$v = 7;}
+		;
+
+postfix_expression returns [Exp v]
+		: a=primary_expression {$v = new PostfixExp($a.v);}
+		  (b=postfix {$v.addPostfix($b.v);})*
+		;
+
+postfix returns [Postfix v]
+		: '[' a=expression ']' {$v = new ArrayFix($a.v);}
+		| '(' ')' {$v = new FunFix();}
+		| '(' b=arguments ')' {$v = new FunFix($b.v);}
+		| '.' c=identifier {$v = new FieldFix(symbol($c.v));}
+		| '->' d=identifier {$v = new BelongFix(symbol($d.v));}
+		| '++' {$v = new DuPlusFix();}
+		| '--' {$v = new DuMinusFix();}
+		;
+
+arguments returns [Arguments v]
+		: a=assignment_expression {$v = new Arguments($a.v);}
+		  (',' b=assignment_expression {$v.addAugument($b.v);})*
+		;
+
+primary_expression returns [Exp v]
+		: a=identifier {$v = new VarExp(symbol($a.v));}
+		| b=constant {$v = $b.v;}
+		| c=string {$v = new StringExp($c.v);}
+		| '(' d=expression ')' {$v = $d.v;}
+		;
+
+constant returns [Exp v]
+		: a=integer_constant {$v = new IntExp($a.v);}
+		| b=character_constant {$v = new CharExp($b.v);}
+		;
+
+//Lexer
+
+typedef_name returns [String v]
+		: a=IDENTIFIER {$v = $a.text;}
+		;
+
+identifier returns [String v]
+		: a=IDENTIFIER {$v = $a.text;}
+		;
+
+string returns [String v]
+		: a=STRING {$v = $a.text;}
+		;
+
+integer_constant returns [int v]
+		: a=INTEGER {$v = $a.int;}
+		;
+
+character_constant returns [char v]
+		: a=CHAR {$v = ($a.text).charAt(0);}
+		;
+
+INTEGER: DECINTEGER
+       | HEXINTEGER
+       | OCTINTEGER
+       ;
+
+CHAR: '\'' ('\\'('t'|'n'|'r'|'\''|'\"'|'\\') | ~('\''|'\\')) '\''
+    ;
+
+DECINTEGER: '0' | [1-9] [0-9]*
+          ;
+
+HEXINTEGER: '0' ('x'|'X') [0-9a-fA-F]*
+          ;
+
+OCTINTEGER: '0' [0-7]+
+          ;
+
+STRING: '"' ('\\'('t'|'n'|'r'|'\''|'\"'|'\\') | ~('\\'|'"'))* '"'
+      ;
+
+IDENTIFIER: [a-zA-Z_] [0-9a-zA-Z_]*
+          ;
+
+WS: [ \r\t\n]+ -> skip
+  ;
+
+COMMENTS: '/*' .*? '*/' -> skip
+        ;
+
+LINE_COMMENT: '//' ~[\r\n]* ('\r'? '\n' | EOF) -> skip
+            ;
+
+INCLUDE_COMMENT: '#include' ~[\r\n]* ('\r'? '\n' | EOF) -> skip
+			   ;            

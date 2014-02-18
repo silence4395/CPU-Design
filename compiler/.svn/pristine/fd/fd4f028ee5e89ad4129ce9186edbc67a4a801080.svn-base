@@ -1,0 +1,22 @@
+package bigproject.ast;
+
+import bigproject.symbol.Symbol;
+
+public class PlanDeclor extends Declor {
+
+	public Symbol name;
+	public int stars;
+	
+	public PlanDeclor() {
+		stars = 0;
+		name = null;
+	}
+	
+	public void addStar() {
+		stars = stars + 1;
+	}
+	
+	public void setName(Symbol a) {
+		name = a;
+	}
+}

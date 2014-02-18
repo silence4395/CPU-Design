@@ -1,0 +1,17 @@
+package bigproject.ast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class InitDeclors extends Ast{
+
+	public List<InitDeclor> decls;
+	
+	public InitDeclors() {
+		decls = new ArrayList<InitDeclor>();
+	}
+	
+	public void addInitDecl(InitDeclor a) {
+		decls.add(a);
+	}
+}

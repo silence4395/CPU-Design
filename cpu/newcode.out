@@ -1,0 +1,88 @@
+	.data
+	.align 2
+	.text
+	.align 2
+	.globl main
+main:
+	jal cmain
+li $v0, 10
+syscall
+cmain:
+	sw $ra, -4($sp)
+	addiu $sp, $sp, -176
+	sw $t0, 100($sp)
+	sw $t1, 104($sp)
+	sw $t2, 108($sp)
+	sw $t3, 112($sp)
+	sw $t4, 116($sp)
+	sw $t5, 120($sp)
+	sw $t6, 124($sp)
+	sw $t7, 128($sp)
+	sw $s0, 132($sp)
+	sw $s1, 136($sp)
+	move $t0, $gp
+	addi $gp, $gp, 24
+	move $t1, $gp
+	addi $gp, $gp, 36
+	move $t2, $gp
+	addi $gp, $gp, 24
+	li $t3, 0
+L12:
+	bge $t3, 2, L13
+	li $t4, 0
+L14:
+	bge $t4, 3, L15
+	li $t5, 0
+L16:
+	bge $t5, 2, L17
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 12
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	addi $t5, $t5, 1 #I
+	j L16
+L17:
+	addi $t4, $t4, 1 #I
+	j L14
+L15:
+	addi $t3, $t3, 1 #I
+	j L12
+L13:
+	li $v0, 0
+	j L11
+L11:
+	lw $t0, 100($sp)
+	lw $t1, 104($sp)
+	lw $t2, 108($sp)
+	lw $t3, 112($sp)
+	lw $t4, 116($sp)
+	lw $t5, 120($sp)
+	lw $t6, 124($sp)
+	lw $t7, 128($sp)
+	lw $s0, 132($sp)
+	lw $s1, 136($sp)
+	addiu $sp, $sp, 176
+	lw $ra, -4($sp)
+	jr $ra

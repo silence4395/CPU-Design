@@ -1,0 +1,19 @@
+package bigproject.ast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class PostfixExp extends Exp {
+
+	public Exp body;
+	public List<Postfix> postfixes;
+	
+	public PostfixExp(Exp a) {
+		body = a;
+		postfixes = new ArrayList<Postfix>();
+	}
+	
+	public void addPostfix(Postfix a) {
+		postfixes.add(a);
+	}
+}

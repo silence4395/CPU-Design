@@ -1,0 +1,17 @@
+`include "DEF.v"
+/*
+ICACHE_BLOCK_SIZE 64*4 byte
+ICACHE_SIZE 16'h10000 byte
+IMEMORY_SIZE 24'h1000000 byte
+*/
+
+module imemory(address, data, /*enable,*/ read);
+  input [31:0] address;
+  output [127:0] data;
+  //input enable;
+  input read;
+  reg [127:0] imemory [20'hFFFFF:0];
+  
+  assign data = (/*enable &&*/ read) ? imemory[address] : 128'hz;
+  
+endmodule

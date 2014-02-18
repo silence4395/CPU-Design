@@ -1,0 +1,299 @@
+	.data
+	.align 2
+	.text
+	.align 2
+	.globl main
+main:
+	jal cmain
+	li $v0, 10
+	syscall
+cmain:
+	sw $ra, -4($sp)
+	addiu $sp, $sp, -168
+	move $k0, $gp
+	sw $k0, 0($sp)
+	addi $gp, $gp, 3600
+	move $k0, $gp
+	sw $k0, 4($sp)
+	addi $gp, $gp, 3600
+	move $k0, $gp
+	sw $k0, 8($sp)
+	addi $gp, $gp, 3600
+	li $k0, 0
+	sw $k0, 12($sp)
+L12:
+	lw $k0, 12($sp)
+	slt $k1, $k0, 30 #I
+	sw $k1, 24($sp)
+	lw $k0, 24($sp)
+	beqz $k0, L13
+	li $k0, 0
+	sw $k0, 16($sp)
+L14:
+	lw $k0, 16($sp)
+	slt $k1, $k0, 30 #I
+	sw $k1, 28($sp)
+	lw $k0, 28($sp)
+	beqz $k0, L15
+	li $k0, 0
+	sw $k0, 20($sp)
+L16:
+	lw $k0, 20($sp)
+	slt $k1, $k0, 30 #I
+	sw $k1, 32($sp)
+	lw $k0, 32($sp)
+	beqz $k0, L17
+	lw $k0, 0($sp)
+	move $k1, $k0
+	sw $k1, 36($sp)
+	li $k0, 120
+	sw $k0, 44($sp)
+	lw $k0, 12($sp)
+	lw $k1, 44($sp)
+	mul $fp, $k0, $k1
+	sw $fp, 40($sp)
+	lw $k0, 36($sp)
+	lw $k1, 40($sp)
+	add $k0, $k0, $k1
+	sw $k0, 36($sp)
+	lw $k0, 16($sp)
+	sll $k1, $k0, 2
+	sw $k1, 40($sp)
+	lw $k0, 36($sp)
+	lw $k1, 40($sp)
+	add $k0, $k0, $k1
+	sw $k0, 36($sp)
+	lw $k0, 36($sp)
+	lw $k0, 0($k0)
+	sw $k0, 36($sp)
+	lw $k0, 4($sp)
+	move $k1, $k0
+	sw $k1, 52($sp)
+	li $k0, 120
+	sw $k0, 60($sp)
+	lw $k0, 16($sp)
+	lw $k1, 60($sp)
+	mul $fp, $k0, $k1
+	sw $fp, 56($sp)
+	lw $k0, 52($sp)
+	lw $k1, 56($sp)
+	add $k0, $k0, $k1
+	sw $k0, 52($sp)
+	lw $k0, 20($sp)
+	sll $k1, $k0, 2
+	sw $k1, 56($sp)
+	lw $k0, 52($sp)
+	lw $k1, 56($sp)
+	add $k0, $k0, $k1
+	sw $k0, 52($sp)
+	lw $k0, 52($sp)
+	lw $k0, 0($k0)
+	sw $k0, 52($sp)
+	lw $k0, 36($sp)
+	lw $k1, 52($sp)
+	mul $fp, $k0, $k1
+	sw $fp, 48($sp)
+	lw $k0, 8($sp)
+	move $k1, $k0
+	sw $k1, 64($sp)
+	li $k0, 120
+	sw $k0, 72($sp)
+	lw $k0, 12($sp)
+	lw $k1, 72($sp)
+	mul $fp, $k0, $k1
+	sw $fp, 68($sp)
+	lw $k0, 64($sp)
+	lw $k1, 68($sp)
+	add $k0, $k0, $k1
+	sw $k0, 64($sp)
+	lw $k0, 20($sp)
+	sll $k1, $k0, 2
+	sw $k1, 68($sp)
+	lw $k0, 64($sp)
+	lw $k1, 68($sp)
+	add $k0, $k0, $k1
+	sw $k0, 64($sp)
+	lw $k0, 64($sp)
+	lw $k1, 0($k0)
+	sw $k1, 76($sp)
+	lw $k0, 76($sp)
+	lw $k1, 48($sp)
+	add $k0, $k0, $k1
+	sw $k0, 76($sp)
+	lw $k0, 76($sp)
+	lw $k1, 64($sp)
+	sw $k0, 0($k1)
+	lw $k0, 20($sp)
+	move $k1, $k0
+	sw $k1, 80($sp)
+	lw $k0, 20($sp)
+	addi $k0, $k0, 1 #I
+	sw $k0, 20($sp)
+	j L16
+L17:
+	lw $k0, 16($sp)
+	move $k1, $k0
+	sw $k1, 84($sp)
+	lw $k0, 16($sp)
+	addi $k0, $k0, 1 #I
+	sw $k0, 16($sp)
+	j L14
+L15:
+	lw $k0, 12($sp)
+	move $k1, $k0
+	sw $k1, 88($sp)
+	lw $k0, 12($sp)
+	addi $k0, $k0, 1 #I
+	sw $k0, 12($sp)
+	j L12
+L13:
+	li $v0, 0
+	j L11
+L11:
+	addiu $sp, $sp, 168
+	lw $ra, -4($sp)
+	jr $ra
+malloc:
+	li $v0, 9
+	syscall
+	jr $ra
+	
+
+.text
+.globl printf
+printf:
+subu $sp, $sp, 48 # set up the stack frame,
+sw $ra, 32($sp) # saving the local environment.
+sw $fp, 28($sp)
+sw $s0, 24($sp)
+sw $s1, 20($sp)
+sw $s2, 16($sp)
+sw $s3, 12($sp)
+sw $s4, 8($sp)
+sw $s5, 4($sp)
+sw $s6, 0($sp)
+sw $s7, 36($sp)
+sw $t0, 40($sp)
+sw $t1, 44($sp)
+addu $fp, $sp, 48
+
+# grab the arguments:
+move $s0, $a0 # fmt string
+move $s1, $a1 # arg1 (optional)
+move $s2, $a2 # arg2 (optional)
+move $s3, $a3 # arg3 (optional)
+lw $t0, 48($sp)
+lw $t1, 52($sp)
+
+li $s4, 0 # set # of formats = 0
+la $s6, printf_buf # set s6 = base of printf buffer.
+
+printf_loop: # process each character in the fmt:
+lb $s5, 0($s0) # get the next character, and then
+addu $s0, $s0, 1 # bump up $s0 to the next character.
+
+beq $s5, '%', printf_fmt # if the fmt character, then do fmt.
+beq $0, $s5, printf_end # if zero, then go to end.
+
+printf_putc:
+sb $s5, 0($s6) # otherwise, just put this char
+sb $0, 1($s6) # into the printf buffer,
+move $a0, $s6 # and then print it with the
+li $v0, 4 # print_str syscall
+syscall
+
+b printf_loop # loop on.
+
+printf_fmt:
+lb $s5, 0($s0) # see what the fmt character is,
+addu $s0, $s0, 1 # and bump up the pointer.
+
+beq $s4, 6, printf_loop # if we've already processed 6 args,
+# then *ignore* this fmt.
+beq $s5, 'd', printf_int # if 'd', print as a decimal integer.
+beq $s5, 's', printf_str # if 's', print as a string.
+beq $s5, 'c', printf_char # if 'c', print as a ASCII char.
+beq $s5, '0', printf_prefix # if '0', print as a '0'-prefix dectimal integer.
+beq $s5, '%', printf_perc # if '%', print a '%'
+b printf_loop # otherwise, just continue.
+
+printf_shift_args: # shift over the fmt args,
+move $s1, $s2 # $s1 = $s2
+move $s2, $s3 # $s2 = $s3
+move $s3, $t0 # $s3 = $t0
+move $t0, $t1 # $t0 = $t1
+
+add $s4, $s4, 1 # increment # of args processed.
+
+b printf_loop # and continue the main loop.
+
+printf_prefix: # deal with a %0
+lb $s5, 0($s0)
+add $s0, $s0, 1
+li $s7, 1
+printf_prefix_loop_1:
+mul $s7, $s7, 10
+sub $s5, $s5, 1
+bgt $s5, '1', printf_prefix_loop_1
+printf_prefix_loop_2:
+move $a0, $s1
+div $a0, $a0, $s7
+rem $a0, $a0, 10
+li $v0, 1
+syscall
+div $s7, $s7, 10
+bge $s7, 1, printf_prefix_loop_2
+lb $s5, 0($s0)
+addu $s0, $s0, 1
+b printf_shift_args # branch to printf_shift_args
+
+
+printf_int: # deal with a %d:
+move $a0, $s1 # do a print_int syscall of $s1.
+li $v0, 1
+syscall
+b printf_shift_args # branch to printf_shift_args
+
+printf_str: # deal with a %s:
+move $a0, $s1 # do a print_string syscall of $s1.
+li $v0, 4
+syscall
+b printf_shift_args # branch to printf_shift_args
+
+printf_char: # deal with a %c:
+sb $s1, 0($s6) # fill the buffer in with byte $s1,
+sb $0, 1($s6) # and then a null.
+move $a0, $s6 # and then do a print_str syscall
+li $v0, 4 # on the buffer.
+syscall
+b printf_shift_args # branch to printf_shift_args
+
+printf_perc: # deal with a %%:
+li $s5, '%' # (this is redundant)
+sb $s5, 0($s6) # fill the buffer in with byte %,
+sb $0, 1($s6) # and then a null.
+move $a0, $s6 # and then do a print_str syscall
+li $v0, 4 # on the buffer.
+syscall
+b printf_loop # branch to printf_loop
+
+printf_end:
+lw $ra, 32($sp) # restore the prior environment:
+lw $fp, 28($sp)
+lw $s0, 24($sp)
+lw $s1, 20($sp)
+lw $s2, 16($sp)
+lw $s3, 12($sp)
+lw $s4, 8($sp)
+lw $s5, 4($sp)
+lw $s6, 0($sp)
+lw $s7, 36($sp)
+lw $t0, 40($sp)
+lw $t1, 44($sp)
+addu $sp, $sp, 48 # release the stack frame.
+jr $ra # return.
+
+.data
+printf_buf: .space 2
+
+## end of printf.asm

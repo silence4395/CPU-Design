@@ -1,0 +1,80 @@
+package bigproject.regalloc;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.TreeSet;
+
+import bigproject.analysis.LiveInterval;
+import bigproject.main.RegConst;
+import bigproject.translate.CompUnit;
+import bigproject.translate.Temp;
+
+public class LinearScan extends RegAlloc implements Comparator<LiveInterval> {
+	
+	private List<LiveInterval> active = new ArrayList<LiveInterval>();
+	private TreeSet<Integer> freeregs = new TreeSet<Integer>();
+
+	public LinearScan(CompUnit unit) {
+		for (int i = 0; i < RegConst.FreeRegs.length; i++) {
+			freeregs.add(RegConst.FreeRegs[i]);
+		}
+				
+		for (LiveInterval interval: unit.intervals) {
+			expireOldIntervals(interval);
+			if (active.size() == RegConst.FreeRegs.length) {
+				spillAtInterval(interval);
+			}
+			else {
+				interval.register = freeregs.pollFirst();
+				active.add(interval);
+			}
+		}
+		
+		for (LiveInterval interval: unit.intervals) {
+			if (!interval.spilled) {
+				unit.level.useRegister(interval.register);
+			}
+		}
+	}
+	
+	private void expireOldIntervals(LiveInterval interval) {
+		Collections.sort(active, this);
+		ListIterator<LiveInterval> iter = active.listIterator();
+		while (iter.hasNext()) {
+			LiveInterval t = iter.next();
+			if (t.endpoint >= interval.startpoint)
+				return;
+			freeregs.add(t.register);
+			iter.remove();
+		}
+	}
+
+	private void spillAtInterval(LiveInterval interval) {
+		LiveInterval spill = active.get(active.size() - 1);
+		if (spill.endpoint > interval.endpoint) {
+			interval.register = spill.register;
+			spill.spilled = true;
+			spill.register = RegConst.SpillReg;
+			active.remove(spill);
+			active.add(interval);
+		} else {
+			interval.spilled = true;
+			interval.register = RegConst.SpillReg;
+		}
+	}
+
+	@Override
+	public String map(Temp temp) {
+		LiveInterval i = temp.getLiveInterval();
+		return "$" + RegConst.RegNames[i.register];
+	}
+
+	@Override
+	public int compare(LiveInterval a, LiveInterval b) {
+		return a.endpoint - b.endpoint;
+	}
+
+}

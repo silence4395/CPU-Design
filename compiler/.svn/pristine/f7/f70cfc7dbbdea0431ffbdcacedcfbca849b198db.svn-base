@@ -1,0 +1,37 @@
+package bigproject.ast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bigproject.symbol.Symbol;
+
+public class RecordTy extends Ty {
+
+	public Symbol name;
+	public int recordclass; // 0: struct 1: union
+	public List<Ty> types;
+	public List<Declors> decls;
+	
+	public RecordTy() {
+		name = null;
+		recordclass = 0;
+		types = new ArrayList<Ty>();
+		decls = new ArrayList<Declors>();
+	}
+	
+	public void setClass(int a) {
+		recordclass = a;
+	}
+	
+	public void setName(Symbol a) {
+		name = a;
+	}
+	
+	public void addTy(Ty a) {
+		types.add(a);
+	}
+	
+	public void addDecls(Declors a) {
+		decls.add(a);
+	}
+}

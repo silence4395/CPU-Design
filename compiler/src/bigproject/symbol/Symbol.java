@@ -1,0 +1,29 @@
+package bigproject.symbol;
+
+import java.util.Dictionary;
+import java.util.Hashtable;
+
+public class Symbol {
+	
+	public String name;
+	private static Dictionary<String, Symbol> dict = new Hashtable<String, Symbol>();
+	
+	private Symbol(String a) {
+		name = a;
+	}
+	
+	public static Symbol symbol(String a) {
+		String reala = a.intern();
+		Symbol b = dict.get(reala);
+		if (b==null) {
+			b = new Symbol(reala);
+			dict.put(reala, b);
+		}
+		return b;
+	}
+	
+	public String toString() {
+		return name;
+	}
+	
+}

@@ -1,0 +1,15 @@
+library verilog;
+use verilog.vl_types.all;
+entity \register\ is
+    port(
+        data1           : out    vl_logic_vector(31 downto 0);
+        reg_number1     : in     vl_logic_vector(4 downto 0);
+        read1           : in     vl_logic;
+        data2           : out    vl_logic_vector(31 downto 0);
+        reg_number2     : in     vl_logic_vector(4 downto 0);
+        read2           : in     vl_logic;
+        data3           : in     vl_logic_vector(31 downto 0);
+        reg_number3     : in     vl_logic_vector(4 downto 0);
+        write3          : in     vl_logic
+    );
+end \register\;

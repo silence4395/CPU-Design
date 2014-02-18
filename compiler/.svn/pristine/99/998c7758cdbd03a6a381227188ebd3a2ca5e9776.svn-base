@@ -1,0 +1,14 @@
+package bigproject.ast;
+
+public class FunFix extends Postfix {
+
+	public Arguments augus;
+	
+	public FunFix() {
+		augus = null;
+	}
+	
+	public FunFix(Arguments a) {
+		augus = a;
+	}
+}

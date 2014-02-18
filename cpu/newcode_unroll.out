@@ -1,0 +1,374 @@
+	.data
+	.align 2
+	.text
+	.align 2
+	.globl main
+main:
+	jal cmain
+cmain:
+	sw $ra, -4($sp)
+	addiu $sp, $sp, -724
+	sw $t0, 648($sp)
+	sw $t1, 652($sp)
+	sw $t2, 656($sp)
+	sw $t3, 660($sp)
+	sw $t4, 664($sp)
+	sw $t5, 668($sp)
+	sw $t6, 672($sp)
+	sw $t7, 676($sp)
+	sw $s0, 680($sp)
+	sw $s1, 684($sp)
+	move $t0, $gp
+	addi $gp, $gp, 24
+	move $t1, $gp
+	addi $gp, $gp, 24
+	move $t2, $gp
+	addi $gp, $gp, 16
+	li $t3, 0
+	li $t4, 0
+	li $t5, 0
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t5, 1
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t4, 1
+	li $t5, 0
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t5, 1
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t4, 2
+	li $t5, 0
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t5, 1
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t3, 1
+	li $t4, 0
+	li $t5, 0
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t5, 1
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t4, 1
+	li $t5, 0
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t5, 1
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t4, 2
+	li $t5, 0
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s0, $t4, $t7
+	add $t7, $t1, $s0
+	sll $s0, $t5, 2
+	add $t7, $t7, $s0
+	lw $t7, 0($t7)
+	mul $s0, $t6, $t7
+	li $t6, 8
+	mul $t7, $t3, $t6
+	add $t6, $t2, $t7
+	sll $t7, $t5, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t7, 8
+	mul $s1, $t3, $t7
+	add $t7, $t2, $s1
+	sll $s1, $t5, 2
+	add $t7, $t7, $s1
+	add $t6, $t6, $s0
+	sw $t6, 0($t7)
+	li $t5, 1
+	li $t6, 12
+	mul $t7, $t3, $t6
+	add $t6, $t0, $t7
+	sll $t7, $t4, 2
+	add $t6, $t6, $t7
+	lw $t6, 0($t6)
+	li $t0, 8
+	mul $t7, $t4, $t0
+	add $t0, $t1, $t7
+	sll $t7, $t5, 2
+	add $t0, $t0, $t7
+	lw $t0, 0($t0)
+	mul $t1, $t6, $t0
+	li $t0, 8
+	mul $t4, $t3, $t0
+	add $t0, $t2, $t4
+	sll $t4, $t5, 2
+	add $t0, $t0, $t4
+	lw $t0, 0($t0)
+	li $t4, 8
+	mul $t6, $t3, $t4
+	add $t3, $t2, $t6
+	sll $t6, $t5, 2
+	add $t3, $t3, $t6
+	add $t0, $t0, $t1
+	sw $t0, 0($t3)
+	li $v0, 0
+	j L11
+L11:
+	lw $t0, 648($sp)
+	lw $t1, 652($sp)
+	lw $t2, 656($sp)
+	lw $t3, 660($sp)
+	lw $t4, 664($sp)
+	lw $t5, 668($sp)
+	lw $t6, 672($sp)
+	lw $t7, 676($sp)
+	lw $s0, 680($sp)
+	lw $s1, 684($sp)
+	addiu $sp, $sp, 724
+	lw $ra, -4($sp)
+	jr $ra

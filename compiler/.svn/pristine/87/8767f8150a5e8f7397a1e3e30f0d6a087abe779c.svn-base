@@ -1,0 +1,63 @@
+package bigproject.opt;
+
+import bigproject.ast.*;
+
+public class LoopUnroll_Check {
+
+	int loopcount = 0;
+	
+	public void work(Program tree) {
+		checkProgram(tree);
+	}
+	
+	public void checkProgram(Program node) {
+		for (DeclStat decl: node.body)
+			checkDeclStat((DeclStat) decl);
+	}
+	
+	private void checkDeclStat(DeclStat node) {
+		if (node instanceof FunDecl)
+			checkDeclStat((FunDecl) node);
+	}
+	
+	private void checkDeclStat(FunDecl node) {
+		checkStat(node.body);
+	}
+
+	private void checkStat(CompStat node) {
+		for (DeclStat decl: node.declors)
+			checkDeclStat(decl);
+		for (Stat stat: node.stats)
+			checkStat(stat);
+	}
+	
+	private void checkStat(Stat node) {
+		if (node instanceof CompStat)
+			checkStat((CompStat) node);
+		if (node instanceof SelectStat)
+			checkStat((SelectStat) node);
+		if (node instanceof WhileStat)
+			checkStat((WhileStat) node);
+		if (node instanceof ForStat)
+			checkStat((ForStat) node);
+	}
+
+	private void checkStat(SelectStat node) {
+		checkStat(node.thenclause);
+		if (node.elseclause != null)
+			checkStat(node.elseclause);
+	}
+
+	private void checkStat(WhileStat node) {
+		checkStat(node.body);
+	}
+
+	private void checkStat(ForStat node) {
+		if (loopcount > 1)
+			node.unrollable = false;
+		loopcount = loopcount + 1;
+		checkStat(node.body);
+		loopcount = loopcount - 1;
+	}
+
+}

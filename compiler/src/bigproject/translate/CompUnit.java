@@ -1,0 +1,39 @@
+package bigproject.translate;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bigproject.analysis.Block;
+import bigproject.analysis.LiveInterval;
+import bigproject.interm.Interm;
+
+public class CompUnit {
+
+	public List<Interm> interms = null;
+	public Label label = null;
+	public Level level = null;
+	public List<Block> blocks = new ArrayList<Block>();
+	
+	public CompUnit(List<Interm> a, Label b, Level c) {
+		interms = a;
+		label = b;
+		level = c;
+	}
+	
+	public void setBlocks(List<Block> a) {
+		blocks = a;
+	}
+	
+	public List<LiveInterval> intervals = new ArrayList<LiveInterval>();
+
+	public void setInterms(List<Interm> a) {
+		interms = a; 
+	}
+
+	public void updateInterms() {
+		interms = new ArrayList<Interm>();
+		for (Block block: blocks)
+			interms.addAll(block.interms);
+	}
+	
+}

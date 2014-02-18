@@ -1,0 +1,19 @@
+package bigproject.ast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ArrayDeclor extends Declor {
+
+	public PlanDeclor name;
+	public List<Exp> dim;
+	
+	public ArrayDeclor(PlanDeclor a) {
+		name = a;
+		dim = new ArrayList<Exp>();
+	}
+	
+	public void addDim(Exp a) {
+		dim.add(a);
+	}
+}

@@ -1,0 +1,13 @@
+package bigproject.main;
+
+public class Main {
+	public static void doit(Integer a) {
+		a = new Integer(2);
+	}
+	
+	public static void main(String[] args) {
+		Integer in = new Integer(1);
+		doit(in);
+		System.out.println(in.intValue());
+	}
+}

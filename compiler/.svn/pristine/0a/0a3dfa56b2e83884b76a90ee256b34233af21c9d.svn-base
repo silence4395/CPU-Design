@@ -1,0 +1,18 @@
+package bigproject.interm;
+
+import bigproject.translate.Temp;
+
+public class BinOp extends Interm {
+
+	public Temp dest;
+	public Temp left;
+	public Temp right;
+	public int op;
+	
+	public BinOp(Temp a, int b, Temp c, Temp d) {
+		dest = a;
+		left = c;
+		right = d;
+		op = b;
+	}
+}

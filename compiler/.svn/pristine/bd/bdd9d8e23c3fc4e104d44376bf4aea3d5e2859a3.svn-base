@@ -1,0 +1,15 @@
+package bigproject.interm;
+
+import bigproject.translate.Temp;
+import bigproject.types.Array;
+
+public class InitArray extends Interm {
+
+	public Temp var = null;
+	public Array type = null;
+	
+	public InitArray(Temp a, Array b) {
+		var = a;
+		type = b;
+	}
+}

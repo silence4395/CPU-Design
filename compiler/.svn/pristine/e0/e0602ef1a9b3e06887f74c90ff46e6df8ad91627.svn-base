@@ -1,0 +1,50 @@
+package bigproject.interm;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import bigproject.assem.Assem;
+import bigproject.translate.Const;
+import bigproject.translate.Temp;
+
+public class StoreC extends Interm {
+
+	public Temp dest = null;
+	public Const shift = null;
+	public Temp source = null;
+	
+	public StoreC(Temp a, Const b, Temp c) {
+		dest = a;
+		shift = b;
+		source = c;
+	}
+	
+	public String toString() {
+		return dest + "[" + shift + "] = " + source; 
+	}
+	
+	@Override
+	public List<Assem> gen() {
+		List<Assem> result = new ArrayList<Assem>();
+		result.add(new Assem("sb %, %(%)", source, shift.value, dest));
+		return result;
+	}
+	
+	@Override
+	public Set<Temp> use() {
+		Set<Temp> set = new HashSet<Temp>();
+		set.add(dest);
+		set.add(source);
+		return set;
+	}
+	
+	@Override
+	public void replaceUseTemp(Temp oldt, Temp newt) {
+		if (source.equals(oldt))
+			source = newt;
+		if (dest.equals(oldt))
+			dest = newt;
+	}
+}

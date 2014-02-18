@@ -1,0 +1,17 @@
+package bigproject.ast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Declors extends Ast {
+
+	public List<Declor> body;
+	
+	public Declors() {
+		body = new ArrayList<Declor>();
+	}
+	
+	public void addDecl(Declor a) {
+		body.add(a);
+	}
+}

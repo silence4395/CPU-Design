@@ -1,0 +1,18 @@
+package bigproject.ast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Arguments extends Exp {
+
+	public List<Exp> augus;
+	
+	public Arguments(Exp a) {
+		augus = new ArrayList<Exp>();
+		augus.add(a);
+	}
+	
+	public void addAugument(Exp a) {
+		augus.add(a);
+	}
+}

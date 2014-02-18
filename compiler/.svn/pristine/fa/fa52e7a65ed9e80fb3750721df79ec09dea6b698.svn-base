@@ -1,0 +1,23 @@
+package bigproject.ast;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class CompStat extends Stat {
+
+	public List<DeclStat> declors;
+	public List<Stat> stats;
+	
+	public CompStat() {
+		declors = new ArrayList<DeclStat>();
+		stats = new ArrayList<Stat>();
+	}
+	
+	public void addDecl(DeclStat a) {
+		declors.add(a);
+	}
+	
+	public void addStat(Stat a) {
+		stats.add(a);
+	}
+}

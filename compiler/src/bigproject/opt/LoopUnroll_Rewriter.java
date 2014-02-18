@@ -1,0 +1,163 @@
+package bigproject.opt;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bigproject.ast.*;
+
+public class LoopUnroll_Rewriter {
+	
+	private int looplimit = 500;
+	
+	private Boolean rewrited = false;
+	
+	public void work(Program tree) {
+		rewrited = false;
+		checkProgram(tree);
+	}
+	
+	public void checkProgram(Program node) {
+		for (DeclStat decl: node.body)
+			checkDeclStat((DeclStat) decl);
+	}
+	
+	private void checkDeclStat(DeclStat node) {
+		if (node instanceof FunDecl)
+			checkDeclStat((FunDecl) node);
+	}
+	
+	private void checkDeclStat(FunDecl node) {
+		node.body = checkStat(node.body);
+	}
+
+	private CompStat checkStat(CompStat node) {
+		for (DeclStat decl: node.declors)
+			checkDeclStat(decl);
+		for (int i = 0; i < node.stats.size(); i++) {
+			Stat stat = node.stats.get(i);
+			node.stats.set(i, checkStat(stat));
+		}
+		return node;
+	}
+	
+	private Stat checkStat(Stat node) {
+		if (node instanceof CompStat)
+			return checkStat((CompStat) node);
+		if (node instanceof SelectStat)
+			return checkStat((SelectStat) node);
+		if (node instanceof WhileStat)
+			return checkStat((WhileStat) node);
+		if (node instanceof ForStat)
+			return checkStat((ForStat) node);
+		return node;
+	}
+
+	private Stat checkStat(SelectStat node) {
+		checkStat(node.thenclause);
+		if (node.elseclause != null)
+			checkStat(node.elseclause);
+		return node;
+	}
+
+	private Stat checkStat(WhileStat node) {
+		checkStat(node.body);
+		return node;
+	}
+
+	private Stat checkStat(ForStat node) {
+		if (!node.unrollable) {
+			node.body = checkStat(node.body);
+			return node;
+		}
+		node.body = checkStat(node.body);
+		if ((node.firstcond == null) ||
+				!(node.firstcond instanceof AssignExp) ||
+				(node.secondcond == null) ||
+				!(node.secondcond instanceof OpExp) ||
+				(node.thirdcond == null))
+			return node;
+		AssignExp firstcond = (AssignExp) node.firstcond;
+		if (!(firstcond.right instanceof IntExp) ||
+				!(firstcond.left instanceof VarExp))
+			return node;
+		VarExp vari = (VarExp) firstcond.left;
+		String i = vari.name.name;
+		int begin = ((IntExp) firstcond.right).value;
+		OpExp secondcond = (OpExp) node.secondcond;
+		if (!(secondcond.explist.size() == 2) ||
+				!(secondcond.explist.get(0) instanceof VarExp) ||
+				!(secondcond.explist.get(1) instanceof IntExp) ||
+				!secondcond.isCompare())
+			return node;
+		VarExp secondleft = (VarExp) secondcond.explist.get(0);
+		IntExp secondright = (IntExp) secondcond.explist.get(1);
+		if (!secondleft.name.name.equals(i))
+			return node;
+		int end = 0;
+		Boolean increase;
+		int op = secondcond.oplist.get(0);
+		if (op == OpExp.Greater){
+			end = secondright.value + 1;
+			increase = false;
+		} else if (op == OpExp.Less){
+			end = secondright.value - 1;
+			increase = true;
+		} else if (op == OpExp.GreaterOrEqual){
+			end = secondright.value;
+			increase = false;
+		} else if (op == OpExp.LessOrEqual){
+			end = secondright.value;
+			increase = false;
+		} else {
+			return node;
+		}
+		if (!(node.thirdcond instanceof PostfixExp))
+			return node;
+		PostfixExp thirdcond = (PostfixExp) node.thirdcond;
+		if (!(thirdcond.body instanceof VarExp)||
+				!(thirdcond.postfixes.size() == 1) ||
+				!((thirdcond.postfixes.get(0) instanceof DuPlusFix) || 
+				  (thirdcond.postfixes.get(0) instanceof DuMinusFix)))
+			return node;
+		VarExp thirdcondbody = (VarExp) thirdcond.body;
+		if (!thirdcondbody.name.name.equals(i))
+			return node;
+		if (thirdcond.postfixes.get(0) instanceof DuPlusFix)
+			if (!increase)
+				return node;
+		if (thirdcond.postfixes.get(0) instanceof DuMinusFix)
+			if (increase)
+				return node;
+		if (increase)
+			if ((begin > end) || (end-begin > looplimit))
+				return node;
+		if (!increase)
+			if ((begin < end) || (begin-end > looplimit))
+				return node;
+		if (increase) {
+			List<Stat> list = new ArrayList<Stat>();
+			TreeClone clone = new TreeClone();
+			for (int j = begin; j <= end; j++) {
+				AssignExp assign = new AssignExp(vari, 0, new IntExp(j));
+				list.add(new ExpStat(assign));
+				list.add(clone.cloneStat(node.body));
+			}
+			List<DeclStat> list2 = new ArrayList<DeclStat>();
+			return new CompStat(list2, list);
+		}
+		List<Stat> list = new ArrayList<Stat>();
+		TreeClone clone = new TreeClone();
+		for (int j = end; j >= begin; j--) {
+			AssignExp assign = new AssignExp(vari, 0, new IntExp(j));
+			list.add(new ExpStat(assign));
+			list.add(clone.cloneStat(node.body));
+		}
+		List<DeclStat> list2 = new ArrayList<DeclStat>();
+		return new CompStat(list2, list);
+	}
+		
+	public Boolean isRewrited() {
+		return rewrited;
+	}
+
+}

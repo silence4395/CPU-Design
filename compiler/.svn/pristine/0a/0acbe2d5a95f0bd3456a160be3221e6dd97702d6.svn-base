@@ -1,0 +1,8 @@
+package bigproject.types;
+
+public class Function extends Type {
+
+	public Type argumenttype;
+	public Type returntype;
+	
+}

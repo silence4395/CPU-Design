@@ -1,0 +1,21 @@
+package bigproject.interm;
+
+import bigproject.translate.Const;
+import bigproject.translate.Temp;
+
+public class Load extends Interm {
+
+	public Temp dest = null;
+	public Temp memaddr = null;
+	public Const shift = null;
+	
+	public Load(Temp a, Temp b, Const c) {
+		dest = a;
+		memaddr = b;
+		shift = c;
+	}
+	
+	public String toString() {
+		return dest + " = " + memaddr + "[" + shift + "]";
+	}
+}

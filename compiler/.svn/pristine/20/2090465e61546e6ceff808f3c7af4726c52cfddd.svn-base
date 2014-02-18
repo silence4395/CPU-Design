@@ -1,0 +1,87 @@
+package bigproject.translate;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
+
+import bigproject.ast.*;
+import bigproject.env.Env;
+import bigproject.interm.Interm;
+import bigproject.symbol.Symbol;
+import bigproject.types.Function;
+import bigproject.types.Pointer;
+import bigproject.types.Type;
+
+public class Translate {
+
+	public Env env = null;
+	
+	public Translate() {
+		env = new Env();
+	}
+	
+	public Translate(Env a) {
+		env = a;
+	}
+	
+	private Stack<Label> labelstack = new Stack<Label>();
+	private List<Interm> result = new ArrayList<Interm>();
+	
+	private class NameAndType {
+		public Symbol name;
+		public Type type;
+		public NameAndType(Symbol a, Type b) {
+			name = a;
+			type = b;
+		}
+		public void setType(Type a) {
+			type = a;
+		}
+	}
+	
+	public void transProg(Program node) {
+		for (DeclStat decl: node.body) {
+			transDeclStat((DeclStat) decl);
+		}
+	}
+
+	private void transDeclStat(DeclStat node) {
+		if (node instanceof TypeDecl)
+			transDeclStat((TypeDecl) node);
+		if (node instanceof VarDecl)
+			transDeclStat((VarDecl) node);
+		if (node instanceof FunDecl)
+			transDeclStat((FunDecl) node);
+	}
+	
+	private void transDeclStat(TypeDecl node) {
+		Type type;
+		type = transTy(node.type);
+		List<NameAndType> symlist = transDeclors(node.decls);
+		for (int i=0; i<symlist.size(); i++) {
+			Type temp = symlist.get(i).type;
+
+			env.typeenv.put(symlist.get(i).name, temp);
+		}
+
+	}
+	
+	private List<NameAndType> transDeclors(Declors node) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private Type transTy(Ty node) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private void transDeclStat(VarDecl node) {
+		// TODO
+	}
+	
+	private void transDeclStat(FunDecl node) {
+		// TODO
+	}
+	
+}

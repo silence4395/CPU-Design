@@ -1,0 +1,15 @@
+package bigproject.interm;
+
+import bigproject.translate.Temp;
+import bigproject.types.Record;
+
+public class InitRecord extends Interm {
+
+	public Temp var = null;
+	public Record type = null;
+	
+	public InitRecord(Temp a, Record b) {
+		var = a;
+		type = b;
+	}
+}

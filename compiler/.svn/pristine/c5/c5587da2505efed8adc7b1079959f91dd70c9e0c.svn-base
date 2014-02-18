@@ -1,0 +1,90 @@
+Label: L7_printBoard
+enter L7_printBoard, params are [t0, t1]
+t2 = 0
+Label: L9
+t4 = t2 < t0
+if t4 false goto L10
+t5 = L11
+t6 = t1
+t7 = t2 * 4
+t8 = t6 + t7
+t6 = t6[0]
+t6 = t6[0]
+call printf[t5, t6]
+t9 = t2
+t2 = t2 + 1
+goto L9
+Label: L10
+t10 = L12
+call printf[t10]
+return 0
+goto L8
+Label: L8
+leave L7_printBoard
+Label: cmain
+enter cmain, params are []
+t11 = 3
+t15 = t11 * 4
+t16 = call malloc[t15]
+t13 = t16
+t17 = t13
+t18 = 0
+t17 = t17 + t18
+t19 = 1
+t17[0] = t19
+t12 = 1
+Label: L15
+t20 = t12 <= t11
+if t20 false goto L16
+t21 = t13
+t22 = t12 - 1
+t23 = t22 * 4
+t24 = t21 + t23
+t21 = t24[0]
+t25 = t21 * 2
+t26 = t13
+t27 = t12 * 4
+t26 = t26 + t27
+t26[0] = t25
+t28 = t12
+t12 = t12 + 1
+goto L15
+Label: L16
+t29 = t13
+t30 = t11 * 4
+t31 = t29 + t30
+t29 = t31[0]
+t32 = t29 * 4
+t33 = call malloc[t32]
+t14 = t33
+t12 = 0
+Label: L17
+t35 = t13
+t36 = t11 * 4
+t37 = t35 + t36
+t35 = t37[0]
+t34 = t12 < t35
+if t34 false goto L18
+t38 = t13
+t39 = t11 * 4
+t40 = t38 + t39
+t38 = t40[0]
+t41 = t38 * 4
+t42 = call malloc[t41]
+t43 = t14
+t44 = t12 * 4
+t43 = t43 + t44
+t43[0] = t42
+t45 = t12
+t12 = t12 + 1
+goto L17
+Label: L18
+t46 = t13
+t47 = t11 * 4
+t48 = t46 + t47
+t46 = t48[0]
+t49 = call L7_printBoard[t46, t14]
+return 0
+goto L14
+Label: L14
+leave cmain

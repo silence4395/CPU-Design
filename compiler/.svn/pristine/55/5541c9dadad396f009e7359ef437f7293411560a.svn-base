@@ -1,0 +1,19 @@
+package bigproject.interm;
+
+import bigproject.translate.Const;
+import bigproject.translate.Temp;
+
+public class MoveI extends Interm {
+
+	public Temp dest = null;
+	public Const source = null;
+	
+	public MoveI(Temp a, Const b) {
+		dest = a;
+		source = b;
+	}
+	
+	public String toString() {
+		return dest + " = " + source;
+	}
+}

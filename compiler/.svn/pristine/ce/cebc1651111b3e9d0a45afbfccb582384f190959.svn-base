@@ -1,0 +1,7 @@
+package bigproject.types;
+
+public class Pointer extends Type {
+
+	public Type elementtype;
+	
+}

@@ -1,0 +1,227 @@
+package bigproject.analysis;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import bigproject.ast.OpExp;
+import bigproject.interm.*;
+import bigproject.translate.CompUnit;
+import bigproject.translate.Label;
+import bigproject.translate.Temp;
+
+public class Analyzer {
+
+	public void lableEliminate(CompUnit unit) {
+		
+		boolean changeflag = true;
+		while (changeflag) {
+			changeflag = false;
+			List<Interm> interms = unit.interms;
+		
+			for (int i = 0; i < interms.size()-1; i++)
+				if ((interms.get(i) instanceof LabelMark) &&
+					(interms.get(i+1) instanceof LabelMark)) {
+					Label oldl = ((LabelMark) interms.get(i+1)).label;
+					Label newl = ((LabelMark) interms.get(i)).label;
+					for (Interm interm: interms)
+						interm.replaceLabel(oldl, newl);
+					interms.remove(i+1);
+					changeflag = true;
+					break;
+				}
+			
+			if (changeflag)
+				continue;
+			
+			for (int i = 0; i<interms.size(); i++)
+				if (interms.get(i) instanceof LabelMark) {
+					Label label = ((LabelMark) interms.get(i)).label;
+					if (label.forfun)
+						continue;
+					int j = 0;
+					for (j = 0; j < interms.size(); j++)
+						if (label.equals(interms.get(j).getLabel()))
+							break;
+					if (j < interms.size())
+						continue;
+					changeflag = true;
+					interms.remove(i);
+					break;
+				}
+			
+		}
+		
+	}
+
+	public void findBranch(CompUnit unit) {
+		List<Interm> interms = unit.interms;
+		for (int i = 1; i < interms.size(); i++)
+			if (interms.get(i) instanceof IfFalse) {
+				if (interms.get(i-1) instanceof BinOp) {
+					IfFalse a = (IfFalse) interms.get(i);
+					BinOp b = (BinOp) interms.get(i-1);
+					if (a.cond.equals(b.dest) && (b.op >= OpExp.Equal) && (b.op <= OpExp.GreaterOrEqual)) {
+						interms.set(i, new Branch(b.left, b.right, b.op-OpExp.Equal, a.label));
+						interms.remove(i-1);
+					}
+				} else if (interms.get(i-1) instanceof BinOpI) {
+					IfFalse a = (IfFalse) interms.get(i);
+					BinOpI b = (BinOpI) interms.get(i-1);
+					if (a.cond.equals(b.dest) && (b.op >= OpExp.Equal) && (b.op <= OpExp.GreaterOrEqual)) {
+						interms.set(i, new Branch(b.left, b.right, b.op-OpExp.Equal, a.label));
+						interms.remove(i-1);
+					}
+				}
+			}
+	}
+
+	public void findBlocks(CompUnit unit) {
+		
+		List<Interm> interms = unit.interms;
+		
+		for (int i = 0; i < interms.size(); i++) {
+			interms.get(i).clearAll();
+		}
+		for (int i = 0; i < interms.size()-1; i++) {
+			Interm interm = interms.get(i);
+			if (!((interm instanceof Goto) || 
+				  (interm instanceof Leave))) {
+				interm.addNext(interms.get(i+1));
+			}
+		}
+		interms.get(0).setLeader();
+		interms.get(2).setLeader();
+		for (Interm interm: interms) {
+			if (interm instanceof Leave) {
+				interm.setLeader();
+			}
+		}
+		for (int i = 0; i < interms.size()-1; i++) {
+			Interm interm = interms.get(i);
+			Label target = null;
+			if (interm instanceof Branch)
+				target = ((Branch) interm).label;
+			else if (interm instanceof Goto)
+				target = ((Goto) interm).label;
+			else if (interm instanceof IfFalse)
+				target = ((IfFalse) interm).label;
+			if (target == null)
+				continue;
+			for (Interm t: interms)
+				if (t instanceof LabelMark)
+					if (((LabelMark) t).label.equals(target)) {
+						t.setLeader();
+						interm.addNext(t);
+					}
+			interms.get(i+1).setLeader();
+		}
+
+		List<Block> blocks = new ArrayList<Block>();
+		for (int i = 0; i < interms.size(); i++) {
+			Interm interm = interms.get(i);
+			if (interm.leader) {
+				Block block = new Block(interm);
+				int j = i + 1;
+				while ((j < interms.size()) && (!interms.get(j).leader)) {
+					block.addInterm(interms.get(j));
+					j = j + 1;
+				}
+				blocks.add(block);
+			}
+		}
+		for (Block block: blocks) {
+			Interm last = block.interms.get(block.interms.size()-1);
+			for (Interm next: last.next) {
+				int i = 0;
+				for (i = 0; i < blocks.size(); i++)
+					if (blocks.get(i).interms.get(0).equals(next))
+						break;
+				block.addNext(blocks.get(i));
+				blocks.get(i).addPre(block);
+			}
+		}
+		
+		unit.setBlocks(blocks);
+	}
+
+	public void findLiveness(CompUnit unit) {
+		List<Block> blocks = unit.blocks;
+		for (Block block: blocks) {
+			block.IN.clear();
+			block.OUT.clear();
+			for (Interm interm: block.interms) {
+				interm.IN.clear();
+				interm.OUT.clear();
+			}
+		}
+		
+		boolean changeflag = true;
+		while (changeflag) {
+			changeflag = false;
+			for (int i = blocks.size()-2; i >= 0; i--) {
+				Block block = blocks.get(i);
+				block.OUT.clear();
+				for (Block t: block.next) {
+					block.OUT.addAll(t.IN);
+				}
+				Set<Temp> oldIN = new HashSet<Temp>(block.IN);
+				block.IN.clear();
+				block.IN.addAll(block.OUT);
+				block.IN.removeAll(block.def());
+				block.IN.addAll(block.use());
+				if (!oldIN.equals(block.IN)) {
+					changeflag = true;
+				}
+			}
+		}
+		
+		for (Block block: blocks)
+			for (int i = block.interms.size()-1; i >= 0; i--) {
+				Interm interm = block.interms.get(i);
+				if (i == block.interms.size()-1)
+					interm.OUT = block.OUT;
+				else
+					interm.OUT = block.interms.get(i+1).IN;
+				interm.IN.addAll(interm.OUT);
+				interm.IN.removeAll(interm.def());
+				interm.IN.addAll(interm.use());
+			}
+		
+	}
+
+	public void findLiveIntervals(CompUnit unit) {
+		HashMap<Temp, LiveInterval> intervals = new HashMap<Temp, LiveInterval>();
+		int count = 0;
+		for (Interm interm: unit.interms) {
+			count = count + 1;
+			for (Temp t : interm.IN) {
+				t.expandInterval(count);
+				intervals.put(t, t.getLiveInterval());
+			}
+			for (Temp t : interm.OUT) {
+				t.expandInterval(count);
+				intervals.put(t, t.getLiveInterval());
+			}
+			for (Temp t : interm.use()) {
+				t.expandInterval(count);
+				intervals.put(t, t.getLiveInterval());
+			}
+			for (Temp t : interm.def()) {
+				t.expandInterval(count);
+				intervals.put(t, t.getLiveInterval());
+			}
+		}
+		for (Temp temp: intervals.keySet())
+			if (temp.level.depth == 0) {
+				temp.expandInterval(1);
+				temp.expandInterval(count);
+				intervals.put(temp, temp.getLiveInterval());
+			}
+		unit.intervals = new ArrayList<LiveInterval>(intervals.values());
+		Collections.sort(unit.intervals);
+	}
+}

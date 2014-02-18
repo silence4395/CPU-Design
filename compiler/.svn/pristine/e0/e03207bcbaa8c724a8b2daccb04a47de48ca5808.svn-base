@@ -1,0 +1,30 @@
+package bigproject.interm;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bigproject.assem.Assem;
+import bigproject.translate.Temp;
+
+public class Move extends Interm {
+
+	public Temp dest = null;
+	public Temp source = null;
+	
+	public Move(Temp a, Temp b) {
+		dest = a;
+		source = b;
+	}
+	
+	public String toString() {
+		return dest + " = " + source;
+	}
+	
+	@Override
+	public List<Assem> gen() {
+		List<Assem> result = new ArrayList<Assem>();
+		result.add(new Assem("move @, %", dest, source));
+		return result;
+	}
+	
+}

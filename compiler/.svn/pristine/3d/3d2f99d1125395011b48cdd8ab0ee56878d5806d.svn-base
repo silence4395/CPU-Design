@@ -1,0 +1,46 @@
+package bigproject.types;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bigproject.symbol.*;
+
+public class Record extends Type {
+
+	class RecordField {
+		Symbol name;
+		Type type;
+		public RecordField(Symbol a, Type b) {
+			name = a;
+			type = b;
+		}
+	}
+	
+	public List<RecordField> fields = null;
+	
+	public Record() {
+		fields = new ArrayList<RecordField>();
+	}
+	
+	public Record(Symbol a, Type b) {
+		fields = new ArrayList<RecordField>();
+		fields.add(new RecordField(a, b));
+	}
+	
+	public void addField(Symbol a, Type b) {
+		fields.add(new RecordField(a, b));
+	}
+	
+	public boolean coerceTo(Type type) {
+		return type.actual() == this.actual();
+	}
+	
+	public List<Type> getFieldsType() {
+		List<Type> result = new ArrayList<Type>();
+		for (RecordField field: fields) {
+			result.add(field.type);
+		}
+		return result;
+	}
+	
+}

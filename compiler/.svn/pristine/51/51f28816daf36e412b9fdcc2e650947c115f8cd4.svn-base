@@ -1,0 +1,52 @@
+package bigproject.ast;
+
+import java.util.List;
+
+public class OpExp extends Exp {
+
+	public List<Exp> explist = null;
+	public List<Integer> oplist = null;
+	public int op;
+	
+	public OpExp(List<Exp> a, List<Integer> b) {
+		explist = a;
+		oplist = b;
+	}
+	
+	public OpExp(List<Exp> a, int b) {
+		explist = a;
+		op = b;
+	}
+	
+	public static String[] ops = {",", "||", "&&", "|", "^", "&", "==",
+								  "!=", "<", ">", "<=", ">=", "<<", ">>",
+								  "+", "-", "*", "/", "%"};
+	
+	public Boolean isCompare() {
+		if (oplist == null)
+			return (op >= OpExp.Less) && (op <= OpExp.GreaterOrEqual);
+		else
+			return (oplist.get(0) >= OpExp.Less) && (oplist.get(0) <= OpExp.GreaterOrEqual);
+	}
+	
+	public static int Comma = 0,         // ',' not use
+					  LogicalOr = 1,    // '||'
+					  LogicalAnd = 2,   // '&&'
+					  Or = 3,           // '|'
+					  Xor = 4,          // '^'
+					  And = 5,          // '&'
+					  Equal = 6,        // '=='
+					  NotEqual = 7,     // '!='
+					  Less = 8,         // '<'
+					  Greater = 9,      // '>'
+					  LessOrEqual = 10, // '<='
+					  GreaterOrEqual = 11,  // '>='
+					  Shl = 12,          // '<<'
+					  Shr = 13,          // '>>'
+					  Plus = 14,         // '+'
+					  Minus = 15,        // '-'
+					  Mult = 16,         // '*'
+					  Div = 17,          // '/'
+					  Mod = 18;          // '%'
+
+}

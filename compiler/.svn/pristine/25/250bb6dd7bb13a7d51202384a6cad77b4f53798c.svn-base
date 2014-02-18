@@ -1,0 +1,23 @@
+package bigproject.translate;
+
+public class Temp extends Addr {
+
+	public static int Count = 0;
+	public Level level = null;
+	public int index = 0;
+	public int num = 0;
+	public boolean isaddress = false; 
+	
+	public Temp(Level a, int b) {
+		level = a;
+		index = b;
+		Count = Count + 1;
+		num = Count;
+		isaddress = false;
+	}
+	
+	public String toString() {
+		return "t" + num;
+	}
+	
+}

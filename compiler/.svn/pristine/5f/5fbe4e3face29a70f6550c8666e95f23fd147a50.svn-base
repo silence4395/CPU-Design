@@ -1,0 +1,173 @@
+// Generated from CTX.g4 by ANTLR 4.0
+
+package bigproject.syntactic;
+import bigproject.ast.*;
+import bigproject.symbol.*;
+import static bigproject.symbol.Symbol.symbol;
+
+import org.antlr.v4.runtime.tree.*;
+import org.antlr.v4.runtime.Token;
+
+public interface CTXListener extends ParseTreeListener {
+	void enterExpression(CTXParser.ExpressionContext ctx);
+	void exitExpression(CTXParser.ExpressionContext ctx);
+
+	void enterDeclarator(CTXParser.DeclaratorContext ctx);
+	void exitDeclarator(CTXParser.DeclaratorContext ctx);
+
+	void enterAssignment_expression(CTXParser.Assignment_expressionContext ctx);
+	void exitAssignment_expression(CTXParser.Assignment_expressionContext ctx);
+
+	void enterMultiplicative_expression(CTXParser.Multiplicative_expressionContext ctx);
+	void exitMultiplicative_expression(CTXParser.Multiplicative_expressionContext ctx);
+
+	void enterJump_statement(CTXParser.Jump_statementContext ctx);
+	void exitJump_statement(CTXParser.Jump_statementContext ctx);
+
+	void enterCompound_statement(CTXParser.Compound_statementContext ctx);
+	void exitCompound_statement(CTXParser.Compound_statementContext ctx);
+
+	void enterCast_expression(CTXParser.Cast_expressionContext ctx);
+	void exitCast_expression(CTXParser.Cast_expressionContext ctx);
+
+	void enterCharacter_constant(CTXParser.Character_constantContext ctx);
+	void exitCharacter_constant(CTXParser.Character_constantContext ctx);
+
+	void enterEquality_expression(CTXParser.Equality_expressionContext ctx);
+	void exitEquality_expression(CTXParser.Equality_expressionContext ctx);
+
+	void enterFor_statement(CTXParser.For_statementContext ctx);
+	void exitFor_statement(CTXParser.For_statementContext ctx);
+
+	void enterParameters(CTXParser.ParametersContext ctx);
+	void exitParameters(CTXParser.ParametersContext ctx);
+
+	void enterFunction_definition(CTXParser.Function_definitionContext ctx);
+	void exitFunction_definition(CTXParser.Function_definitionContext ctx);
+
+	void enterDeclaration(CTXParser.DeclarationContext ctx);
+	void exitDeclaration(CTXParser.DeclarationContext ctx);
+
+	void enterInit_declarator(CTXParser.Init_declaratorContext ctx);
+	void exitInit_declarator(CTXParser.Init_declaratorContext ctx);
+
+	void enterShift_operator(CTXParser.Shift_operatorContext ctx);
+	void exitShift_operator(CTXParser.Shift_operatorContext ctx);
+
+	void enterExclusive_or_expression(CTXParser.Exclusive_or_expressionContext ctx);
+	void exitExclusive_or_expression(CTXParser.Exclusive_or_expressionContext ctx);
+
+	void enterStatement(CTXParser.StatementContext ctx);
+	void exitStatement(CTXParser.StatementContext ctx);
+
+	void enterLogical_and_expression(CTXParser.Logical_and_expressionContext ctx);
+	void exitLogical_and_expression(CTXParser.Logical_and_expressionContext ctx);
+
+	void enterAdditive_expression(CTXParser.Additive_expressionContext ctx);
+	void exitAdditive_expression(CTXParser.Additive_expressionContext ctx);
+
+	void enterUnary_operator(CTXParser.Unary_operatorContext ctx);
+	void exitUnary_operator(CTXParser.Unary_operatorContext ctx);
+
+	void enterProgram(CTXParser.ProgramContext ctx);
+	void exitProgram(CTXParser.ProgramContext ctx);
+
+	void enterShift_expression(CTXParser.Shift_expressionContext ctx);
+	void exitShift_expression(CTXParser.Shift_expressionContext ctx);
+
+	void enterLogical_or_expression(CTXParser.Logical_or_expressionContext ctx);
+	void exitLogical_or_expression(CTXParser.Logical_or_expressionContext ctx);
+
+	void enterType_name(CTXParser.Type_nameContext ctx);
+	void exitType_name(CTXParser.Type_nameContext ctx);
+
+	void enterAdditive_operator(CTXParser.Additive_operatorContext ctx);
+	void exitAdditive_operator(CTXParser.Additive_operatorContext ctx);
+
+	void enterPlain_declaration(CTXParser.Plain_declarationContext ctx);
+	void exitPlain_declaration(CTXParser.Plain_declarationContext ctx);
+
+	void enterIdentifier(CTXParser.IdentifierContext ctx);
+	void exitIdentifier(CTXParser.IdentifierContext ctx);
+
+	void enterStruct_or_union(CTXParser.Struct_or_unionContext ctx);
+	void exitStruct_or_union(CTXParser.Struct_or_unionContext ctx);
+
+	void enterInitializers(CTXParser.InitializersContext ctx);
+	void exitInitializers(CTXParser.InitializersContext ctx);
+
+	void enterInclusive_or_expression(CTXParser.Inclusive_or_expressionContext ctx);
+	void exitInclusive_or_expression(CTXParser.Inclusive_or_expressionContext ctx);
+
+	void enterConstant_expression(CTXParser.Constant_expressionContext ctx);
+	void exitConstant_expression(CTXParser.Constant_expressionContext ctx);
+
+	void enterMultiplicative_operator(CTXParser.Multiplicative_operatorContext ctx);
+	void exitMultiplicative_operator(CTXParser.Multiplicative_operatorContext ctx);
+
+	void enterEquality_operator(CTXParser.Equality_operatorContext ctx);
+	void exitEquality_operator(CTXParser.Equality_operatorContext ctx);
+
+	void enterWhile_statement(CTXParser.While_statementContext ctx);
+	void exitWhile_statement(CTXParser.While_statementContext ctx);
+
+	void enterRelational_expression(CTXParser.Relational_expressionContext ctx);
+	void exitRelational_expression(CTXParser.Relational_expressionContext ctx);
+
+	void enterPostfix_expression(CTXParser.Postfix_expressionContext ctx);
+	void exitPostfix_expression(CTXParser.Postfix_expressionContext ctx);
+
+	void enterAssignment_operator(CTXParser.Assignment_operatorContext ctx);
+	void exitAssignment_operator(CTXParser.Assignment_operatorContext ctx);
+
+	void enterDeclarators(CTXParser.DeclaratorsContext ctx);
+	void exitDeclarators(CTXParser.DeclaratorsContext ctx);
+
+	void enterUnary_expression(CTXParser.Unary_expressionContext ctx);
+	void exitUnary_expression(CTXParser.Unary_expressionContext ctx);
+
+	void enterConstant(CTXParser.ConstantContext ctx);
+	void exitConstant(CTXParser.ConstantContext ctx);
+
+	void enterSelection_statement(CTXParser.Selection_statementContext ctx);
+	void exitSelection_statement(CTXParser.Selection_statementContext ctx);
+
+	void enterExpression_statement(CTXParser.Expression_statementContext ctx);
+	void exitExpression_statement(CTXParser.Expression_statementContext ctx);
+
+	void enterPlain_declarator(CTXParser.Plain_declaratorContext ctx);
+	void exitPlain_declarator(CTXParser.Plain_declaratorContext ctx);
+
+	void enterInit_declarators(CTXParser.Init_declaratorsContext ctx);
+	void exitInit_declarators(CTXParser.Init_declaratorsContext ctx);
+
+	void enterRelational_operator(CTXParser.Relational_operatorContext ctx);
+	void exitRelational_operator(CTXParser.Relational_operatorContext ctx);
+
+	void enterPostfix(CTXParser.PostfixContext ctx);
+	void exitPostfix(CTXParser.PostfixContext ctx);
+
+	void enterArguments(CTXParser.ArgumentsContext ctx);
+	void exitArguments(CTXParser.ArgumentsContext ctx);
+
+	void enterTypedef_name(CTXParser.Typedef_nameContext ctx);
+	void exitTypedef_name(CTXParser.Typedef_nameContext ctx);
+
+	void enterInteger_constant(CTXParser.Integer_constantContext ctx);
+	void exitInteger_constant(CTXParser.Integer_constantContext ctx);
+
+	void enterAnd_expression(CTXParser.And_expressionContext ctx);
+	void exitAnd_expression(CTXParser.And_expressionContext ctx);
+
+	void enterPrimary_expression(CTXParser.Primary_expressionContext ctx);
+	void exitPrimary_expression(CTXParser.Primary_expressionContext ctx);
+
+	void enterString(CTXParser.StringContext ctx);
+	void exitString(CTXParser.StringContext ctx);
+
+	void enterType_specifier(CTXParser.Type_specifierContext ctx);
+	void exitType_specifier(CTXParser.Type_specifierContext ctx);
+
+	void enterInitializer(CTXParser.InitializerContext ctx);
+	void exitInitializer(CTXParser.InitializerContext ctx);
+}

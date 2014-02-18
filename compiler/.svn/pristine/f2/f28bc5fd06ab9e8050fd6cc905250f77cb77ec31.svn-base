@@ -1,0 +1,17 @@
+package bigproject.interm;
+
+import bigproject.translate.Label;
+
+public class LabelMark extends Interm {
+
+	public Label label;
+	
+	public LabelMark(Label a) {
+		label = a;
+	}
+	
+	public String toString() {
+		return "Label: " + label;
+	}
+	
+}

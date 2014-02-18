@@ -1,0 +1,170 @@
+m255
+K3
+13
+cModel Technology
+Z0 dF:\Work\CPU\ex2\RiscCpu
+T_opt
+VX;=LL5BaoCg:^NHnW;lHX2
+04 3 4 work cpu fast 0
+=1-90004e402dbb-51b6d637-195-1ad4
+Z1 o-quiet -auto_acc_if_foreign -work work
+n@_opt
+Z2 OL;O;10.1c;51
+Z3 dF:\Work\CPU\ex2\RiscCpu
+T_opt1
+VMTNNojJ?S_n0a`>;J;HKO2
+04 8 4 work register fast 0
+=1-90004e402dbb-51b6d74a-1a1-181c
+R1
+n@_opt1
+R2
+vclock
+IJJ_XP1b8]]_MM`1COf[n]1
+VoW;g7lM1Cg;h2FdN1gd;;1
+Z4 dF:\Work\CPU\cpu
+w1370935954
+8F:/Work/CPU/cpu/CLOCK.v
+FF:/Work/CPU/cpu/CLOCK.v
+L0 2
+Z5 OL;L;10.1c;51
+r1
+31
+Z6 o-work work -L mtiAvm -L mtiOvm -L mtiUvm -L mtiUPF
+!i10b 1
+!s100 @hD_J7mQR1kQbObWiUgn53
+!s85 0
+!s108 1370937154.118000
+!s107 DEF.v|F:/Work/CPU/cpu/CLOCK.v|
+!s90 -reportprogress|300|-work|work|-vopt|F:/Work/CPU/cpu/CLOCK.v|
+vcpu
+!s100 ]@k2n3zc3BoTgO496F>l62
+I6CC5fz3?gDoA_@ZQ0BQij1
+Vh1g>PZF>:fH;@=22ObH[P3
+R4
+Z7 w1370936874
+Z8 8F:/Work/CPU/cpu/CPU.v
+Z9 FF:/Work/CPU/cpu/CPU.v
+L0 12
+R5
+r1
+31
+Z10 !s108 1370937153.947000
+Z11 !s107 REGISTER.v|PC.v|IF.v|EX.v|IMEMORY.v|ICACHE.v|DMEMORY.v|DCACHE.v|DEF.v|CLOCK.v|F:/Work/CPU/cpu/CPU.v|
+Z12 !s90 -reportprogress|300|-work|work|-vopt|F:/Work/CPU/cpu/CPU.v|
+R6
+!i10b 1
+!s85 0
+vdmemory
+I9?ZkSIgQlhbj;BE6R9ECH3
+V[M>BB[AFa5oBM72PfS`J:2
+R4
+R7
+FDMEMORY.v
+R8
+R9
+L0 8
+R5
+r1
+31
+R10
+R11
+R12
+R6
+!s100 54W7LL>hK<cz`0DCmAI7]0
+!i10b 1
+!s85 0
+vexcute
+IAY@UeKlN<UfWSJ4Xhbioe3
+VAPcIXbg08C9Uel]8_dBGa2
+R4
+R7
+FEX.v
+R8
+R9
+L0 2
+R5
+r1
+31
+R10
+R11
+R12
+R6
+!s100 H[mMSP[?6fLI8g7QzE9>82
+!i10b 1
+!s85 0
+vifetch
+I2U6L0iFD6EIZm;N?ndNUc2
+VJ[oK3V:78K0]QbF7kW_SG3
+R4
+w1370937147
+FIF.v
+R8
+R9
+L0 2
+R5
+r1
+31
+R10
+R11
+R12
+R6
+!s100 f1Qh:jhDXOXgU1@S37PU92
+!i10b 1
+!s85 0
+vimemory
+I<i4;lER>IL^;W2Kn?Fbag1
+VngifOcLDfCPSEQ87QoGQn3
+R4
+R7
+FIMEMORY.v
+R8
+R9
+L0 8
+R5
+r1
+31
+R10
+R11
+R12
+R6
+!s100 `I:5<977VikE^V:5nlfba1
+!i10b 1
+!s85 0
+vpc
+IdFKT<[iD2F=NVJ^SJGMUU2
+ViYmQlHQD9F;]EM<`G>bh31
+R4
+R7
+FPC.v
+R8
+R9
+L0 2
+R5
+r1
+31
+R10
+R11
+R12
+R6
+!s100 BMmbMjT]5elln81[EGcjM0
+!i10b 1
+!s85 0
+vregister
+I72j4>Ojf:7aV1MRQ7dR2^1
+Vo=6m18A6VI98nG>2naBCO0
+R4
+R7
+FREGISTER.v
+R8
+R9
+L0 2
+R5
+r1
+31
+R10
+R11
+R12
+R6
+!s100 MY=648:]lF3j]Ne=<0L@M1
+!i10b 1
+!s85 0

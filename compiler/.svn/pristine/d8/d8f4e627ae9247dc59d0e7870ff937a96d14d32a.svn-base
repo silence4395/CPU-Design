@@ -1,0 +1,15 @@
+package bigproject.interm;
+
+import bigproject.translate.Temp;
+
+public class Move extends Interm {
+
+	public Temp dest = null;
+	public Temp source = null;
+	
+	public Move(Temp a, Temp b) {
+		dest = a;
+		source = b;
+	}
+	
+}

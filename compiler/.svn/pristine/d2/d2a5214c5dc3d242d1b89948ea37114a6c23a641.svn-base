@@ -1,0 +1,24 @@
+package bigproject.interm;
+
+import java.util.List;
+
+import bigproject.translate.Label;
+import bigproject.translate.Level;
+import bigproject.translate.Temp;
+
+public class Enter extends Interm {
+
+	public Label label = null;
+	public Level level = null;
+	public List<Temp> params = null;
+	
+	public Enter(Label a, Level b, List<Temp> c) {
+		label = a;
+		level = b;
+		params = c;
+	}
+	
+	public String toString() {
+		return "enter " + label + ", params are " + params;
+	}
+}

@@ -1,0 +1,22 @@
+package bigproject.types;
+
+public class Type {
+
+	public Type actual() {
+		return this;
+	}
+	
+	public boolean coerceTo(Type a) {
+		return false;
+	}
+	
+	public int size() {
+		return 0;
+	}
+	
+	public static Type Void = new Void();
+	public static Type Int = new Int();
+	public static Type Char = new Char();
+	public static Type Nil = new Nil();
+	
+}

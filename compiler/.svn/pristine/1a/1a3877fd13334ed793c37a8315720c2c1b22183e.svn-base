@@ -1,0 +1,57 @@
+package bigproject.assem;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import bigproject.interm.Interm;
+import bigproject.regalloc.RegAlloc;
+import bigproject.translate.CompUnit;
+
+public class Codegen {
+
+	public List<Assem> inits = null;
+	public List<String> lines = null;
+	
+	public Codegen() {
+		inits = new ArrayList<Assem>();
+		lines = new ArrayList<String>();
+	}
+	
+	public void gen(Assem a) {
+		inits.add(a);
+	}
+	
+	public void gen(List<Assem> a) {
+		inits.addAll(a);
+	}
+	
+	public void gen(List<Interm> interms, RegAlloc alloc) {
+		List<Assem> assems= new ArrayList<Assem>();
+		
+		for (Interm interm: interms) {
+			assems.addAll(interm.gen());
+		}
+		
+		for (Assem assem: assems) {
+			lines.add(assem.toString(alloc));
+		}
+	}
+	
+	public void gen(CompUnit unit, RegAlloc alloc) {
+		this.gen(unit.interms, alloc);
+	}
+
+	public void printToFile(BufferedWriter writer) throws IOException {
+		for (Assem init: inits) {
+			writer.write(init.toString());
+			writer.newLine();
+		}
+		for (String line: lines) {
+			writer.write(line);
+			writer.newLine();
+		}
+	}
+}

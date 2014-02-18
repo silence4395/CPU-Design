@@ -1,0 +1,82 @@
+package bigproject.interm;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import bigproject.assem.Assem;
+import bigproject.main.RegConst;
+import bigproject.translate.Label;
+import bigproject.translate.Temp;
+
+public class CallProc extends Interm {
+
+	public Label name = null;
+	public List<Temp> params = null;
+	
+	public CallProc(Label a, List<Temp> b) {
+		name = a;
+		params = b;
+	}
+	
+	public String toString() {
+		return "call " + name + "" + params;
+	}
+	
+	@Override
+	public List<Assem> gen() {
+		List<Assem> result = new ArrayList<Assem>();
+		result.addAll(saveParams());
+		result.add(new Assem("jal %", name));
+		result.addAll(restoreSp());
+		return result;
+	}
+	
+	@Override
+	public Set<Temp> use() {
+		Set<Temp> set = new HashSet<Temp>();
+		set.addAll(params);
+		return set;
+	}
+
+	private List<Assem> restoreSp() {
+		List<Assem> result = new ArrayList<Assem>();
+		if (params.size() > 4) {
+			result.add(new Assem("addi $sp, $sp, %", 4*(params.size()-4)));
+		}
+		return result;
+	}
+
+	public List<Assem> saveParams() {
+		List<Assem> result = new ArrayList<Assem>();
+		int i = 0;
+		while ((i < RegConst.ParamRegNum) && (i < params.size())) {
+			result.add(new Assem(
+				"move $%, %", RegConst.RegNames[RegConst.ParamRegBase + i], params.get(i)
+			));
+			i = i + 1;
+		}
+		if (i < params.size()) {
+			for (int j = i; j < params.size(); j++) {
+				result.add(new Assem(
+					"sw %, -%($sp)", params.get(j), 4*(params.size()-j)
+				));
+			}
+			result.add(new Assem("addi $sp, $sp, -%", 4*(params.size()-4)));
+		}
+		return result;
+	}
+	
+	@Override
+	public void replaceUseTemp(Temp oldt, Temp newt) {
+		List<Temp> newparams = new ArrayList<Temp>();
+		for (Temp temp: params) {
+			if (temp.equals(oldt))
+				newparams.add(newt);
+			else
+				newparams.add(temp);
+		}
+		params = newparams;
+	}
+}

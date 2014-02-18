@@ -1,0 +1,7 @@
+package bigproject.types;
+
+public class Array extends Pointer {
+
+	int capacity;
+	
+}

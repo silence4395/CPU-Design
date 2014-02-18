@@ -1,0 +1,44 @@
+package bigproject.interm;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bigproject.assem.Assem;
+import bigproject.main.RegConst;
+import bigproject.translate.Addr;
+import bigproject.translate.Const;
+import bigproject.translate.Temp;
+
+public class Malloc extends Interm {
+	
+	public Temp addr = null;
+	public Addr size = null;
+	
+	public Malloc(Temp a, Addr b) {
+		addr = a;
+		size = b;
+	}
+	
+	public String toString() {
+		return addr + " = malloc(" + size + ")";
+	}
+	
+	@Override
+	public List<Assem> gen() {
+		List<Assem> result = new ArrayList<Assem>();
+		if (size instanceof Const) {
+			result.add(new Assem(
+				"move $@, %", RegConst.RegNames[RegConst.ParamRegBase], ((Const) size).value
+			));
+		} if (size instanceof Temp) {
+			result.add(new Assem(
+				"move $@, %", RegConst.RegNames[RegConst.ParamRegBase], size
+			));
+		}
+		result.add(new Assem("li $v0, 9"));
+		result.add(new Assem("syscall"));
+		result.add(new Assem("move @, $v0", addr));
+		return result;
+	}
+
+}

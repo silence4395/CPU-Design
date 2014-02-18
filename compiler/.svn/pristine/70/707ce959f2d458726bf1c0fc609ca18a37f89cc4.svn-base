@@ -1,0 +1,17 @@
+package bigproject.interm;
+
+import java.util.List;
+
+import bigproject.translate.Label;
+import bigproject.translate.Temp;
+
+public class CallProc extends Interm {
+
+	public Label name = null;
+	public List<Temp> params = null;
+	
+	public CallProc(Label a, List<Temp> b) {
+		name = a;
+		params = b;
+	}
+}

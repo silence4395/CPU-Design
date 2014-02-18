@@ -1,0 +1,14 @@
+package bigproject.translate;
+
+public class Const extends Addr {
+
+	public int value;
+	
+	public Const(int a) {
+		value = a;
+	}
+	
+	public String toString() {
+		return "" + value;
+	}
+}

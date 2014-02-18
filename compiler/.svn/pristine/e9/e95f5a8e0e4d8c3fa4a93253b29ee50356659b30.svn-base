@@ -1,0 +1,128 @@
+package bigproject.main;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.util.List;
+import java.util.Scanner;
+
+import org.antlr.v4.runtime.*;
+
+import bigproject.analysis.Analyzer;
+import bigproject.assem.*;
+import bigproject.ast.*;
+import bigproject.interm.Interm;
+import bigproject.regalloc.DefaultMap;
+import bigproject.syntactic.CTXLexer;
+import bigproject.syntactic.CTXParser;
+import bigproject.semant.*;
+import bigproject.translate.*;
+
+public class Main {
+	
+	public static class MyListener extends BaseErrorListener {
+		@Override
+		public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+								int line, int charPositionInLine, String msg, RecognitionException e)
+		{
+			System.out.println('1');
+			System.exit(1);
+		}
+	}
+	
+	public static String pathOf(String filename) {
+		return SementText.class.getResource(filename).getPath();
+	}
+
+	public static void main(String argv[]) throws Exception {
+		
+		String filename = "input.c";
+	//	String filename = argv[0];
+		ANTLRFileStream file1 = new ANTLRFileStream(filename);
+
+		CTXLexer lexer = new CTXLexer(file1);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		CTXParser parser = new CTXParser(tokens);
+		tokens.fill();
+		parser.removeErrorListeners();
+		parser.addErrorListener(new MyListener());
+
+		Program tree = (Program) parser.program().v;
+
+		Semant semant = new Semant();
+		semant.checkProgram(tree);
+		
+		if (!semant.hasError())
+			System.out.println('0');
+		else {
+			System.out.println('1');
+			System.exit(1);
+		}
+
+		Translate trans = new Translate();
+		trans.transProg(tree);
+		List<CompUnit> units = trans.units;
+		List<Interm> globalvars = trans.intermlist;
+		
+		BufferedWriter writer= new BufferedWriter(new FileWriter("interm.out"));
+		for (Interm code: trans.intermlist) {
+			writer.write(code.toString());
+			writer.newLine();
+		}
+		for (CompUnit unit: trans.units)
+			for (Interm code: unit.interms) {
+				writer.write(code.toString());
+				writer.newLine();
+			}
+		writer.flush();
+		writer.close();
+		
+		CompUnit mainunit = new CompUnit(globalvars, new Label("main"), new Level());
+		trans.units.add(0, mainunit);
+		
+		for (CompUnit unit: trans.units) {
+			Analyzer analyzer = new Analyzer();
+			analyzer.lableEliminate(unit);
+			analyzer.findBranch(unit);
+			analyzer.findBlocks(unit);
+			analyzer.findLiveness(unit);
+			analyzer.findLiveIntervals(unit);
+		}
+		
+		Codegen code = new Codegen();
+		code.gen(new Assem(".data"));
+		code.gen(new Assem(".align 2"));
+		for (DataFrag dataFrag : trans.frags) {
+			code.gen(dataFrag.gen());
+		}
+
+		code.gen(new Assem(".text"));
+		code.gen(new Assem(".align 2"));
+		code.gen(new Assem(".globl main"));
+
+		for (CompUnit unit: units) 
+			if (unit.label.name.equals("main")) {
+				code.gen(new Assem("!main:"));
+				code.gen(unit, DefaultMap.getSingleton());
+				code.lines.add("\tjal cmain");
+				code.lines.add("\tli $v0, 10");
+				code.lines.add("\tsyscall");
+			} else {
+				code.gen(unit, DefaultMap.getSingleton());
+			}
+
+		writer = new BufferedWriter(new FileWriter("code.out"));
+		code.printToFile(writer);
+		
+		Scanner scanner = new Scanner(new BufferedInputStream(Main.class.getResourceAsStream("runtime.s")));
+		while (scanner.hasNextLine()) {
+			writer.write(scanner.nextLine());
+			writer.newLine();
+		}
+		scanner.close();
+		writer.flush();
+		writer.close();
+		
+	}
+	
+}

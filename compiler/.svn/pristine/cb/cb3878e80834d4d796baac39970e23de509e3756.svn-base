@@ -1,0 +1,21 @@
+package bigproject.interm;
+
+import bigproject.translate.Const;
+import bigproject.translate.Temp;
+
+public class Store extends Interm {
+
+	public Temp dest = null;
+	public Const shift = null;
+	public Temp source = null;
+	
+	public Store(Temp a, Const b, Temp c) {
+		dest = a;
+		shift = b;
+		source = c;
+	}
+	
+	public String toString() {
+		return dest + "[" + shift + "] = " + source; 
+	}
+}

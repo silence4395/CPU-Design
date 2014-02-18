@@ -1,0 +1,232 @@
+package bigproject.main;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+import org.antlr.v4.runtime.*;
+
+import bigproject.analysis.Analyzer;
+import bigproject.analysis.Block;
+import bigproject.assem.*;
+import bigproject.ast.*;
+import bigproject.bintranslate.BinTranslate;
+import bigproject.interm.Interm;
+import bigproject.opt.*;
+import bigproject.regalloc.DefaultMap;
+import bigproject.regalloc.LinearScan;
+import bigproject.syntactic.CTXLexer;
+import bigproject.syntactic.CTXParser;
+import bigproject.semant.*;
+import bigproject.translate.*;
+
+public class Main {
+	
+	public static class MyListener extends BaseErrorListener {
+		@Override
+		public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+								int line, int charPositionInLine, String msg, RecognitionException e)
+		{
+			System.out.println('1');
+			System.exit(1);
+		}
+	}
+	
+	public static String pathOf(String filename) {
+		return SementText.class.getResource(filename).getPath();
+	}
+
+	public static void main(String argv[]) throws Exception {
+		
+		String filename = "input.c";
+	//	String filename = argv[0];
+		ANTLRFileStream file1 = new ANTLRFileStream(filename);
+
+		CTXLexer lexer = new CTXLexer(file1);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		CTXParser parser = new CTXParser(tokens);
+		tokens.fill();
+		parser.removeErrorListeners();
+		parser.addErrorListener(new MyListener());
+
+		Program tree = (Program) parser.program().v;
+
+		Semant semant = new Semant();
+		semant.checkProgram(tree);
+		
+		if (!semant.hasError())
+			System.out.println('0');
+		else {
+			System.out.println('1');
+			System.exit(1);
+		}
+		
+		// opt
+		
+		Boolean changeflag;
+		AstReduce astreduce = new AstReduce();
+		ConstantInline cstinline = new ConstantInline();
+		LoopUnrolling loopunroll = new LoopUnrolling();
+		do {
+			changeflag = false;
+			cstinline.findVarDec(tree);
+			cstinline.check(tree);
+			tree = cstinline.rewrite(tree);
+			changeflag = cstinline.isRewrited();
+			tree = astreduce.work(tree);
+		//	loopunroll.check(tree);
+		//	loopunroll.rewrite(tree);
+		//	if (!changeflag)
+		//		changeflag = loopunroll.isRewrited();
+		} while (changeflag);
+		
+		// opt end
+		
+		semant = new Semant();
+		semant.checkProgram(tree);
+		
+		Translate trans = new Translate();
+		trans.transProg(tree);
+		List<CompUnit> units = trans.units;
+		List<Interm> globalvars = trans.intermlist;
+		
+		CompUnit mainunit = new CompUnit(globalvars, new Label("main"), new Level());
+		trans.units.add(0, mainunit);
+
+		
+		BufferedWriter writer= new BufferedWriter(new FileWriter("interm.out"));
+		for (CompUnit unit: trans.units)
+			for (Interm code: unit.interms) {
+				writer.write(code.toString());
+				writer.newLine();
+			}
+		writer.flush();
+		writer.close();
+		
+		Codegen oldcode = new Codegen();
+		oldcode.gen(new Assem(".data"));
+		oldcode.gen(new Assem(".align 2"));
+		for (DataFrag dataFrag : trans.frags) {
+			oldcode.gen(dataFrag.gen());
+		}
+
+		oldcode.gen(new Assem(".text"));
+		oldcode.gen(new Assem(".align 2"));
+		oldcode.gen(new Assem(".globl main"));
+
+		for (CompUnit unit: units) 
+			if (unit.label.name.equals("main")) {
+				oldcode.gen(new Assem("!main:"));
+				oldcode.gen(unit, DefaultMap.getSingleton());
+				oldcode.lines.add("\tjal cmain");
+				oldcode.lines.add("\tli $v0, 10");
+				oldcode.lines.add("\tsyscall");
+			} else {
+				oldcode.gen(unit, DefaultMap.getSingleton());
+			}
+
+		writer = new BufferedWriter(new FileWriter("oldcode.out"));
+		oldcode.printToFile(writer);
+		
+		Scanner oldscanner = new Scanner(new BufferedInputStream(Main.class.getResourceAsStream("runtime.s")));
+		while (oldscanner.hasNextLine()) {
+			writer.write(oldscanner.nextLine());
+			writer.newLine();
+		}
+		oldscanner.close();
+		writer.flush();
+		writer.close();
+
+				
+		for (CompUnit unit: trans.units)
+			if (!unit.label.name.equals("main")) {
+				Analyzer analyzer = new Analyzer();
+				analyzer.lableEliminate(unit);
+				analyzer.findBranch(unit);
+				analyzer.findBlocks(unit);
+				analyzer.findLiveness(unit);
+			}
+		
+		// opt
+		
+		for (CompUnit unit: trans.units) 
+			if (!unit.label.name.equals("main")) {
+				List<Interm> oldinterms = null;
+				do {
+					oldinterms = new ArrayList<Interm>(unit.interms);
+					for (Block block: unit.blocks)
+						new CopyPropagation().work(block);
+					Analyzer analyzer = new Analyzer();
+					analyzer.findLiveness(unit);
+					new DeadCodeElimination().work(unit);
+					analyzer.findBlocks(unit);
+					analyzer.findLiveness(unit);				
+				} while (!unit.interms.equals(oldinterms));
+			}
+		
+		// opt end
+		
+		for (CompUnit unit: trans.units) {
+			new Analyzer().findLiveIntervals(unit);
+		}
+		
+		writer = new BufferedWriter(new FileWriter("newinterm.out"));
+		for (CompUnit unit: trans.units)
+			for (Interm code: unit.interms) {
+				writer.write(code.toString());
+				writer.newLine();
+			}
+		writer.flush();
+		writer.close();
+
+		Codegen code = new Codegen();
+		code.gen(new Assem(".data"));
+		code.gen(new Assem(".align 2"));
+		for (DataFrag dataFrag : trans.frags) {
+			code.gen(dataFrag.gen());
+		}
+
+		code.gen(new Assem(".text"));
+		code.gen(new Assem(".align 2"));
+		code.gen(new Assem(".globl main"));
+
+		for (CompUnit unit: units) 
+			if (unit.label.name.equals("main")) {
+				code.gen(new Assem("!main:"));
+				code.gen(unit, DefaultMap.getSingleton());
+				code.lines.add("\tjal cmain");
+				code.lines.add("syshalt");
+			} else {
+				//code.gen(unit, DefaultMap.getSingleton());
+				code.gen(unit, new LinearScan(unit));
+			}
+
+		writer = new BufferedWriter(new FileWriter("newcode.out"));
+		code.printToFile(writer);
+		
+		/*
+		Scanner scanner = new Scanner(new BufferedInputStream(Main.class.getResourceAsStream("runtime.s")));
+		while (scanner.hasNextLine()) {
+			writer.write(scanner.nextLine());
+			writer.newLine();
+		}
+		scanner.close();
+		*/
+		
+		writer.flush();
+		writer.close();
+		
+		List<String> fincode = code.getCode();
+		BinTranslate btranslate = new BinTranslate(fincode);
+		btranslate.work();
+		writer = new BufferedWriter(new FileWriter("bincode.out"));
+		btranslate.printToFile(writer);
+		writer.flush();
+		writer.close();
+
+	}
+	
+}

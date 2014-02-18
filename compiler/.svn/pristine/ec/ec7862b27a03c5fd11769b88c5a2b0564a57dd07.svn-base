@@ -1,0 +1,45 @@
+package bigproject.ast;
+
+public class OpExp extends Exp {
+
+	public Exp left, right;
+	public int op;
+	
+	public OpExp(Exp a, int b, Exp c) {
+		left = a;
+		op = b;
+		right = c;
+	}
+	
+	public static int Comma = 0,         // ','
+					  Assign = 1,        // '='
+					  MultAssign = 2,    // '*='
+					  DivAssign = 3,     // '/='
+					  ModAssign = 4,     // '%='
+					  PlusAssign = 5,    // '+='
+					  MinusAssign = 6,   // '-='
+					  ShlAssign = 7,     // '<<='
+					  ShrAssign = 8,     // '>>='
+					  AndAssign = 9,     // '&='
+					  XorAssign = 10,    // '^='
+					  OrAssign = 11,     // '|='
+					  LogicalOr = 12,    // '||'
+					  LogicalAnd = 13,   // '&&'
+					  Or = 14,           // '|'
+					  Xor = 15,          // '^'
+					  And = 16,          // '&'
+					  Equal = 17,        // '=='
+					  NotEqual = 18,     // '!='
+					  Less = 19,         // '<'
+					  Greater = 20,      // '>'
+					  LessOrEqual = 21,  // '<='
+					  GreaterOrEqual = 22,  // '>='
+					  Shl = 23,          // '<<'
+					  Shr = 24,          // '>>'
+					  Plus = 25,         // '+'
+					  Minus = 26,        // '-'
+					  Mult = 27,         // '*'
+					  Div = 28,          // '/'
+					  Mod = 29;          // '%'
+
+}

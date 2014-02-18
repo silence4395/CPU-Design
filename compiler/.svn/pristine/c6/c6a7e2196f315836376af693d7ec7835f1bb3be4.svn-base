@@ -1,0 +1,5 @@
+package bigproject.ast;
+
+abstract public class Ast {
+	
+}

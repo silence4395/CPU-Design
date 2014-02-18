@@ -1,0 +1,551 @@
+package bigproject.semant;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bigproject.ast.*;
+import bigproject.env.*;
+import bigproject.symbol.Symbol;
+import bigproject.types.*;
+import bigproject.types.Void;
+
+public class Semant {
+	
+	private Env env = null;
+	
+	public Semant() {
+		this(new Env());
+	}
+	
+	public Semant(Env a) {
+		env = a;
+	}
+	
+	private boolean errorflag = false;
+	
+	private void error() {
+		errorflag = true;
+	}
+	
+	public boolean hasError() {
+		return errorflag;
+	}
+
+	private int loopcount = 0;
+	
+	public void checkProgram(Program node) {
+		loopcount = 0;
+		for (DeclStat decl: node.body) {
+			checkDeclStat((DeclStat) decl);
+		}
+	}
+	
+	private void checkDeclStat(DeclStat node) {
+		if (node instanceof TypeDecl)
+			checkDeclStat((TypeDecl) node);
+		if (node instanceof VarDecl)
+			checkDeclStat((VarDecl) node);
+		if (node instanceof FunDecl)
+			checkDeclStat((FunDecl) node);
+	}
+	
+	private class NameAndType {
+		public Symbol name;
+		public Type type;
+		public NameAndType(Symbol a, Type b) {
+			name = a;
+			type = b;
+		}
+		public void setType(Type a) {
+			type = a;
+		}
+	}
+	
+	private void checkDeclStat(TypeDecl node) {
+		Type type;
+		type = checkTy(node.type);
+		List<NameAndType> symlist = checkDeclors(node.decls);
+		for (int i=0; i<symlist.size(); i++) {
+			Type temp = symlist.get(i).type;
+			if (temp instanceof Function)
+				((Function) temp).setReturnType(type);
+			if (temp instanceof Pointer)
+				((Pointer) temp).bind(type);
+			if (temp == null)
+				temp = type;
+			if (env.typeenv.redeclAtSameLevel(symlist.get(i).name)) {
+				error();
+				return;
+			}
+			env.typeenv.put(symlist.get(i).name, temp);
+		}
+	}
+	
+	private List<NameAndType> checkDeclors(Declors node) {
+		List<NameAndType> result = new ArrayList<NameAndType>();
+		for (Declor decl: node.body)
+			result.add(checkDeclor(decl));
+		
+		for (int i=0; i<result.size(); i++)
+			for (int j=i+1; j<result.size(); j++)
+				if (result.get(i).name == result.get(j).name) {
+					error();
+					return null;
+				}
+		
+		return result;
+	}
+
+	private NameAndType checkDeclor(Declor node) {
+		if (node instanceof FunDeclor)
+			return checkDeclor((FunDeclor) node);
+		if (node instanceof ArrayDeclor)
+			return checkDeclor((ArrayDeclor) node);
+		return null;
+	}
+	
+	private NameAndType checkDeclor(FunDeclor node) {
+		NameAndType result = null;
+		result = checkPlanDeclor(node.name);
+		
+		Record parameters = checkParams(node.parameters);
+		
+		Type temp = result.type;
+		result.setType(new Function(parameters, temp));
+		
+		return result;
+	}
+	
+	private Record checkParams(Params node) {
+		if (node == null) 
+			return null;
+		List<NameAndType> list = new ArrayList<NameAndType>();
+		for (PlanDecl decl: node.parameters)
+			list.add(checkPlanDecl(decl));
+		
+		for (int i=0; i<list.size(); i++)
+			for (int j=i+1; j<list.size(); j++)
+				if (list.get(i).name == list.get(j).name) {
+					error();
+					return null;
+				}
+		
+		Record result = new Record();
+		for (int i=0; i<list.size(); i++)
+			result.addField(list.get(i).name, list.get(i).type);
+		if (node.bdc)
+			result.addField(Symbol.symbol("..."), Type.Nil);
+		
+		return result;
+	}
+
+	private NameAndType checkPlanDecl(PlanDecl node) {
+		
+		Type type = checkTy(node.type);
+		NameAndType result = checkDeclor(node.decl);
+		
+		if (result.type instanceof Function)
+			((Function) result.type).setReturnType(type);
+		if (result.type instanceof Pointer)
+			((Pointer) result.type).bind(type);
+		if (result.type == null)
+			result.type = type;
+		
+		return result;
+	}
+
+	private class ValueAndType {
+		public Integer value = null;
+		public Type type = null;
+		public ValueAndType(Integer a, Type b) {
+			value = a;
+			type = b;
+		}
+	}
+	
+	private NameAndType checkDeclor(ArrayDeclor node) {
+		NameAndType result = null;
+		result = checkPlanDeclor(node.name);
+		
+		if (node.dim.size() == 0)
+			return result;
+		
+		Type array = null;
+		for (int i=node.dim.size()-1; i>=0; i--) {
+			ValueAndType size = null;
+			size = checkExp(node.dim.get(i));
+			if (!checkInt(size.type)) {
+				error();
+				return null;
+			}
+			if (size.value.intValue() < 0) {
+				error();
+				return null;
+			}
+			Array temp = new Array(array, size.value);
+			array = temp;
+		}
+		
+		if (result.type == null)
+			result.setType(array);
+		else if (result.type instanceof Pointer)
+			((Pointer) result.type).bind(array);
+		
+		return result;
+	}
+
+	private boolean checkInt(Type type) {
+		return type.coerceTo(Type.Int);
+	}
+
+	private NameAndType checkPlanDeclor(PlanDeclor node) {
+		Pointer result = null;
+		for (int i=0; i<node.stars; i++) {
+			Pointer temp = new Pointer(result);
+			result = temp;
+		}
+		return new NameAndType(node.name, result);
+	}
+
+	private Type checkTy(Ty node) {
+		if (node instanceof VoidTy)
+			return Type.Void;
+		if (node instanceof CharTy)
+			return Type.Char;
+		if (node instanceof IntTy)
+			return Type.Int;
+		if (node instanceof NameTy)
+			return checkTy((NameTy) node);
+		if (node instanceof RecordTy)
+			return checkTy((RecordTy) node);
+		return Type.Nil;
+	}
+	
+	private Type checkTy(NameTy node) {
+		Type result = (Type) env.typeenv.get(node.name);
+		if (result == null) {
+			error();
+			return Type.Nil;
+		}
+		return result;
+	}
+
+	private boolean checkRecordType(Symbol name, int struct_union) {
+		Type temp = (Type) env.typeenv.get(name);
+		if ((temp instanceof Name) && (((Name)temp).recordclass == struct_union))
+			return true;
+		else if (temp == null)
+			return true;
+		else
+			return false;
+	}
+	
+	private Record checkRecordField(RecordTy node) {
+		
+		Record result = null;
+		if (node.recordclass == 0)
+			result = new Struct();
+		else
+			result = new Union();
+		
+		Type fieldtype = null;
+		List<NameAndType> symlist = null;
+		for (int i=0; i<node.types.size(); i++) {
+			fieldtype = checkTy(node.types.get(i));
+			symlist = checkDeclors(node.decls.get(i));
+			for (int j=0; j<symlist.size(); j++) {
+				Type temp = symlist.get(j).type;
+				if (temp instanceof Function)
+					((Function) temp).setReturnType(fieldtype);
+				if (temp instanceof Pointer)
+					((Pointer) temp).bind(fieldtype);
+				if (temp == null)
+					temp = fieldtype;
+				result.addField(symlist.get(j).name, temp);
+			}
+		}
+		
+		return result;
+	}
+	
+	private Type checkTy(RecordTy node) {
+		
+		if (node.name == null)
+			return checkRecordField(node);
+		
+		Name result = new Name(node.name);
+		
+		if (node.recordclass == 0) {
+			if (checkRecordType(node.name, 1)) {
+				error();
+				return Type.Nil;
+			}
+			result.setStruct();
+		} else {
+			if (checkRecordType(node.name, 0)) {
+				error();
+				return Type.Nil;
+			}
+			result.setUnion();
+		}
+	
+		if ((node.types == null) && (node.decls == null)) {
+			Type anotherresult = (Type) env.typeenv.get(node.name);
+			if (anotherresult == null)
+				env.typeenv.put(node.name, result);
+			else
+				return anotherresult;
+			return result;
+		}
+		
+		Type temp = (Type) env.typeenv.get(node.name);
+		if (env.typeenv.redeclAtSameLevel(node.name) && 
+		    (((Name) temp).acttype != null)) {
+			error();
+			return Type.Nil;
+		}
+		if (temp == null)
+			env.typeenv.put(node.name, result);
+		
+		Record field = checkRecordField(node);
+
+		result = (Name) env.typeenv.get(node.name);
+		result.bind(field);
+		env.typeenv.setLevel(node.name);
+		
+		return result;
+	}
+
+	private void checkDeclStat(VarDecl node) {
+		Type type = checkTy(node.type);
+		List<NameAndType> symlist = checkInitDeclors(node.initdecl, type);
+		for (int i=0; i<symlist.size(); i++) {
+			Type temp = symlist.get(i).type;
+			if (temp instanceof Function)
+				((Function) temp).setReturnType(type);
+			if (temp instanceof Pointer)
+				((Pointer) temp).bind(type);
+			if (temp == null)
+				temp = type;
+			if (env.varenv.redeclAtSameLevel(symlist.get(i).name)) {
+				error();
+				return;
+			}
+			env.varenv.put(symlist.get(i).name, temp);
+		}		
+	}
+	
+	private List<NameAndType> checkInitDeclors(InitDeclors node, Type elementtype) {
+		List<NameAndType> result = new ArrayList<NameAndType>();
+		for (InitDeclor decl: node.decls)
+			result.add(checkInitDeclor(decl, elementtype));
+		
+		for (int i=0; i<result.size(); i++)
+			for (int j=i+1; j<result.size(); j++)
+				if (result.get(i).name == result.get(j).name) {
+					error();
+					return null;
+				}
+		
+		return result;
+	}
+
+	private NameAndType checkInitDeclor(InitDeclor node, Type elementtype) {
+		NameAndType result = checkDeclor(node.name);
+		if (result.type instanceof Function)
+			((Function) result.type).setReturnType(elementtype);
+		if (result.type instanceof Pointer)
+			((Pointer) result.type).bind(elementtype);
+		if (result.type == null)
+			result.type = elementtype;	
+		
+		checkIniter(node.init, result.type);
+		
+		return result;
+	}
+
+	private void checkIniter(Initer node, Type elementtype) {
+		if ((elementtype == null) || (elementtype instanceof Function)) {
+			error();
+			return;
+		}
+		
+		if (node.anotherbody == null) {
+			ValueAndType value = checkExp(node.body);
+			if (!value.type.coerceTo(elementtype))
+				error();
+			return;
+		}
+		
+		if ((elementtype instanceof Array) || (elementtype instanceof Record)) {
+			if (elementtype instanceof Array)
+				checkIniters(node.anotherbody, ((Array) elementtype).elementtype);
+			if (elementtype instanceof Record)
+				checkIniters(node.anotherbody, ((Record) elementtype).getFieldsType());
+			return;
+		}
+		
+		error();
+	}
+
+	private void checkIniters(Initers node, List<Type> elementtypes) {
+		if (elementtypes.size() != node.body.size()) {
+			error();
+			return;
+		}
+		for (int i=0; i<node.body.size(); i++)
+			checkIniter(node.body.get(i), elementtypes.get(i));
+	}
+
+	private void checkIniters(Initers node, Type elementtype) {
+		if (elementtype == null) {
+			error();
+			return;
+		}
+		for (Initer initer: node.body) {
+			checkIniter(initer, elementtype);
+		}
+	}
+
+	private void checkDeclStat(FunDecl node) {
+		Type returntype = checkTy(node.type);
+		NameAndType name = checkPlanDeclor(node.name);
+		if (name.type instanceof Function)
+			((Function) name.type).setReturnType(returntype);
+		if (name.type instanceof Pointer)
+			((Pointer) name.type).bind(returntype);
+		if (name.type == null)
+			name.type = returntype;
+		Record parameters = checkParams(node.parameters);
+		
+		Function fun = new Function(parameters, name.type);
+		if (!checkFunDefValid(fun, name.name)) {
+			error();
+			return;
+		}
+		
+		checkStat(node.body, returntype);
+	}
+
+	private boolean checkFunDefValid(Function fun, Symbol name) {
+		if (env.varenv.redeclAtSameLevel(name)) {
+			Type oldfun = (Type) env.varenv.get(name);
+			if (!(oldfun instanceof Function))
+				return false;
+			if (((Function) oldfun).defined)
+				return false;
+			if (!((Function) oldfun).returntype.coerceTo(fun.returntype))
+				return false;
+			List<Type> oldargu = ((Function) oldfun).argumenttype.getFieldsType();
+			List<Type> newargu = fun.argumenttype.getFieldsType();
+			if (oldargu.size() != newargu.size())
+				return false;
+			for (int i=0; i<oldargu.size(); i++)
+				if (!oldargu.get(i).coerceTo(newargu.get(i)))
+					return false;
+			return true;
+		}
+		env.varenv.put(name, fun);
+		return true;
+	}
+
+	private void checkStat(CompStat node, Type returntype) {
+		env.beginScope();
+		for (DeclStat decl: node.declors)
+			checkDeclStat(decl);
+		for (Stat stat: node.stats)
+			checkStat(stat, returntype);
+		env.endScope();
+	}
+	
+	private void checkStat(Stat node, Type returntype) {
+		if (node instanceof ExpStat)
+			checkStat((ExpStat) node, returntype);
+		if (node instanceof CompStat)
+			checkStat((CompStat) node, returntype);
+		if (node instanceof SelectStat)
+			checkStat((SelectStat) node, returntype);
+		if (node instanceof WhileStat)
+			checkStat((WhileStat) node, returntype);
+		if (node instanceof ForStat)
+			checkStat((ForStat) node, returntype);
+		if (node instanceof JumpStat)
+			checkStat((JumpStat) node, returntype);
+	}
+
+	private void checkStat(ExpStat node, Type returntype) {
+		if (node.body != null)
+			checkExp(node.body);
+	}
+
+	private void checkStat(SelectStat node, Type returntype) {
+		ValueAndType cond = checkExp(node.condition);
+		if (!checkInt(cond.type)) {
+			error();
+			return;
+		}
+		checkStat(node.thenclause, returntype);
+		if (node.elseclause != null)
+			checkStat(node.elseclause, returntype);
+	}
+
+	private void checkStat(WhileStat node, Type returntype) {
+		ValueAndType cond = checkExp(node.condition);
+		if (!checkInt(cond.type)){
+			error();
+			return;
+		}
+		loopcount = loopcount + 1;
+		checkStat(node.body, returntype);
+		loopcount = loopcount - 1;
+	}
+
+	private void checkStat(ForStat node, Type returntype) {
+		if (node.firstcond != null) {
+			ValueAndType cond = checkExp(node.firstcond);
+			if (!checkInt(cond.type)){
+				error();
+				return;
+			}
+		}
+		if (node.secondcond != null) {
+			ValueAndType cond = checkExp(node.secondcond);
+			if (!checkInt(cond.type)){
+				error();
+				return;
+			}
+		}
+		if (node.thirdcond != null) {
+			ValueAndType cond = checkExp(node.thirdcond);
+			if (!checkInt(cond.type)){
+				error();
+				return;
+			}
+		}
+		loopcount = loopcount + 1;
+		checkStat(node.body, returntype);
+		loopcount = loopcount - 1;
+	}
+
+	private void checkStat(JumpStat node, Type returntype) {
+		if ((node instanceof ContinueStat) || (node instanceof BreakStat))
+			if (loopcount < 1) {
+				error();
+				return;
+			}
+		if (node instanceof ReturnStat)
+			if (((ReturnStat) node).result != null) {
+				ValueAndType returnvalue = checkExp(((ReturnStat) node).result);
+				if (!returnvalue.type.coerceTo(returntype)) {
+					error();
+					return;
+				}
+			}
+	}
+
+	private ValueAndType checkExp(Exp node) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

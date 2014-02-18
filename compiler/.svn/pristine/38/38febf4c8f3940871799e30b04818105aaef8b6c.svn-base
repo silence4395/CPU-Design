@@ -1,0 +1,25 @@
+package bigproject.env;
+
+import bigproject.symbol.*;
+import bigproject.types.*;
+
+public class Env {
+
+	public Table typeenv = null;
+	public Table varenv = null;
+	
+	public Env() {
+		initTypeEnv();
+		initVarEnv();
+	}
+
+	private void initVarEnv() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void initTypeEnv() {
+		// TODO Auto-generated method stub
+		
+	}
+}

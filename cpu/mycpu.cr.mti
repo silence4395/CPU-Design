@@ -1,0 +1,112 @@
+F:/Work/CPU/cpu/EX.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/EX.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module excute
+
+Top level modules:
+	excute
+
+} {} {}} F:/Work/CPU/cpu/RS.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/RS.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module rs
+
+Top level modules:
+	rs
+
+} {} {}} F:/Work/CPU/cpu/DMEMORY.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/DMEMORY.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module dmemory
+
+Top level modules:
+	dmemory
+
+} {} {}} F:/Work/CPU/cpu/IF.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/IF.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module ifetch
+
+Top level modules:
+	ifetch
+
+} {} {}} F:/Work/CPU/cpu/IMEMORY.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/IMEMORY.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module imemory
+
+Top level modules:
+	imemory
+
+} {} {}} F:/Work/CPU/cpu/ICACHEL2.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/ICACHEL2.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+
+} {} {}} F:/Work/CPU/cpu/CLOCK.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/CLOCK.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module clock
+
+Top level modules:
+	clock
+
+} {} {}} F:/Work/CPU/cpu/ICACHE.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/ICACHE.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module icache
+
+Top level modules:
+	icache
+
+} {} {}} F:/Work/CPU/cpu/CNT.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/CNT.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module cnt
+
+Top level modules:
+	cnt
+
+} {} {}} F:/Work/CPU/cpu/REGISTER.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/REGISTER.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module register
+
+Top level modules:
+	register
+
+} {} {}} F:/Work/CPU/cpu/DCACHEL2.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/DCACHEL2.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+
+} {} {}} F:/Work/CPU/cpu/DEF.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/DEF.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+
+} {} {}} F:/Work/CPU/cpu/DCACHE.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/DCACHE.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module dcache
+
+Top level modules:
+	dcache
+
+} {} {}} F:/Work/CPU/cpu/CPU.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/CPU.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module clock
+-- Compiling module dcache
+-- Compiling module dmemory
+-- Compiling module icache
+-- Compiling module imemory
+-- Compiling module excute
+-- Compiling module ifetch
+-- Compiling module pc
+-- Compiling module register
+-- Compiling module rs
+-- Compiling module cnt
+-- Compiling module cpu
+
+Top level modules:
+	cpu
+
+} {} {}} F:/Work/CPU/cpu/CDB.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/CDB.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module cdb
+
+Top level modules:
+	cdb
+
+} {} {}} F:/Work/CPU/cpu/PC.v {1 {vlog -work work -vopt F:/Work/CPU/cpu/PC.v
+Model Technology ModelSim SE-64 vlog 10.1c Compiler 2012.07 Jul 27 2012
+-- Compiling module pc
+
+Top level modules:
+	pc
+
+} {} {}}

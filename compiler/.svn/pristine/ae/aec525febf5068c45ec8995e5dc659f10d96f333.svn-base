@@ -1,0 +1,16 @@
+package bigproject.interm;
+
+import java.util.List;
+
+import bigproject.translate.Label;
+import bigproject.translate.Temp;
+
+public class CallFun extends CallProc {
+
+	public Temp dest = null;
+	
+	public CallFun(Temp a, Label b, List<Temp> c) {
+		super(b, c);
+		dest = a;
+	}
+}

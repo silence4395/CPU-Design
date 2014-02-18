@@ -1,0 +1,12 @@
+package bigproject.interm;
+
+import bigproject.translate.Label;
+
+public class Goto extends Interm {
+
+	public Label term = null;
+	
+	public Goto(Label a) {
+		term = a;
+	}
+}

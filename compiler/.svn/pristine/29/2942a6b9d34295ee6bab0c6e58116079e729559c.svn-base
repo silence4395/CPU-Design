@@ -1,0 +1,15 @@
+package bigproject.interm;
+
+import bigproject.translate.Label;
+import bigproject.translate.Temp;
+
+public class IfFalse extends Interm {
+
+	public Temp cond = null;
+	public Label label = null;
+	
+	public IfFalse(Temp a, Label b) {
+		cond = a;
+		label = b;
+	}
+}

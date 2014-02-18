@@ -1,0 +1,67 @@
+package bigproject.interm;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import bigproject.assem.Assem;
+import bigproject.translate.Addr;
+import bigproject.translate.Const;
+import bigproject.translate.Label;
+import bigproject.translate.Temp;
+
+public class Branch extends Interm {
+	
+	public Temp left = null;
+	public Addr right = null;
+	public Label label = null;
+	public int op;
+	public static String[] OpStr = {
+		"bne", "beq", "bge", "ble", "bgt", "blt"
+	};
+	
+	public Branch(Temp a, Addr b, int c, Label d) {
+		left = a;
+		right = b;
+		op = c;
+		label = d;
+	}
+	
+	public String toString() {
+		if (right instanceof Const && ((Const) right).value == 0)
+			return OpStr[op] + "z " + left + " goto " + label;
+		else
+			return OpStr[op] + " " + left + " " + right + " goto " + label;
+	}
+	
+	@Override
+	public List<Assem> gen() {
+		List<Assem> result = new ArrayList<Assem>();
+		if ((right instanceof Const) && ((Const) right).value == 0)
+			result.add(new Assem("%z %, %", OpStr[op], left, label));
+		else
+			result.add(new Assem("% %, %, %", OpStr[op], left, right, label));
+		return result;
+	}
+	
+	@Override
+	public void replaceLabel(Label oldl, Label newl) {
+		if (label.equals(oldl))
+			label = newl;
+	}
+
+	@Override
+	public Label getLabel() {
+		return label;
+	}
+
+	@Override
+	public Set<Temp> use() {
+		Set<Temp> set = new HashSet<Temp>();
+		set.add(left);
+		if (right instanceof Temp)
+			set.add((Temp) right);
+		return set;
+	}
+}

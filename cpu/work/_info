@@ -1,0 +1,281 @@
+m255
+K3
+13
+cModel Technology
+Z0 dF:\Work\CPU\ex2\RiscCpu
+T_opt
+Z1 V2mgdY9<;eCYnViTLmTd]72
+Z2 04 3 4 work cpu fast 0
+Z3 =14-90004e402dbb-51c5b705-c-3bdc
+Z4 o-quiet -auto_acc_if_foreign -work work
+Z5 n@_opt
+Z6 OL;O;10.1c;51
+Z7 dF:\Work\CPU\ex2\RiscCpu
+T_opt1
+Z8 VMTNNojJ?S_n0a`>;J;HKO2
+Z9 04 8 4 work register fast 0
+Z10 =1-90004e402dbb-51b6d74a-1a1-181c
+R4
+Z11 n@_opt1
+R6
+R7
+vcdb
+Z12 !s100 kIX6:UbE[988O^:D@>:c_2
+Z13 Id=<F=j`[@3=Bd6NDXnZ:20
+Z14 VF002;^?:OKXN4RaEQSCC93
+Z15 dF:\Work\CPU\cpu
+Z16 w1371909599
+Z17 8F:/Work/CPU/cpu/CDB.v
+Z18 FF:/Work/CPU/cpu/CDB.v
+L0 2
+Z19 OL;L;10.1c;51
+r1
+31
+Z20 !s90 -reportprogress|300|-work|work|-vopt|F:/Work/CPU/cpu/CDB.v|
+Z21 o-work work -L mtiAvm -L mtiOvm -L mtiUvm -L mtiUPF
+Z22 !s108 1371913360.249000
+Z23 !s107 DEF.v|F:/Work/CPU/cpu/CDB.v|
+!i10b 1
+!s85 0
+vclock
+Z24 IezknbebJSfLY=L4ojeX8U1
+Z25 VoW;g7lM1Cg;h2FdN1gd;;1
+R15
+Z26 w1371889293
+Z27 8F:/Work/CPU/cpu/CLOCK.v
+Z28 FF:/Work/CPU/cpu/CLOCK.v
+L0 2
+R19
+r1
+31
+R21
+Z29 !s100 6[G=[QJO]iViT<haoKk2j1
+Z30 !s108 1371913360.105000
+Z31 !s107 DEF.v|F:/Work/CPU/cpu/CLOCK.v|
+Z32 !s90 -reportprogress|300|-work|work|-vopt|F:/Work/CPU/cpu/CLOCK.v|
+!i10b 1
+!s85 0
+vcnt
+!i10b 1
+!s100 VJPNR^RhF3?BnMlaU>4iH0
+I3kk4GS`o_Q<gK1oLziRVd2
+Z33 V8=jHINf`>2hM:Y87gPz^82
+R15
+w1371902374
+8F:/Work/CPU/cpu/CNT.v
+FF:/Work/CPU/cpu/CNT.v
+L0 1
+R19
+r1
+!s85 0
+31
+!s108 1371913360.541000
+!s107 F:/Work/CPU/cpu/CNT.v|
+!s90 -reportprogress|300|-work|work|-vopt|F:/Work/CPU/cpu/CNT.v|
+R21
+vcpu
+Z34 !s100 8Ic]eFhJPE?`3]1=ERzDf3
+Z35 IC]K4^dQoT@NB96J7:;]nE0
+Z36 Vh1g>PZF>:fH;@=22ObH[P3
+R15
+Z37 w1371911894
+Z38 8F:/Work/CPU/cpu/CPU.v
+Z39 FF:/Work/CPU/cpu/CPU.v
+L0 16
+R19
+r1
+31
+Z40 !s108 1371913359.891000
+Z41 !s107 CNT.v|ICACHEL2.v|DCACHEL2.v|RS.v|REGISTER.v|PC.v|IF.v|EX.v|IMEMORY.v|ICACHE.v|DMEMORY.v|DCACHE.v|DEF.v|CLOCK.v|F:/Work/CPU/cpu/CPU.v|
+Z42 !s90 -reportprogress|300|-work|work|-vopt|F:/Work/CPU/cpu/CPU.v|
+R21
+!i10b 1
+!s85 0
+vdcache
+Z43 IA5g[I9CUFM4NdJMOMB7>92
+Z44 VoI7PHMP9cJ[^I>]nVh5EC0
+R15
+R37
+Z45 FDCACHE.v
+R38
+R39
+L0 2
+R19
+r1
+31
+R40
+R41
+R42
+R21
+Z46 !s100 STM7o5BA7jmGKKREMcYg81
+!i10b 1
+!s85 0
+vdcachel2
+Z47 IdUCQQ:KDV43MG;<T>?L?>3
+Z48 VIGUUU4nW8TD]?bnOj83cX0
+R15
+Z49 w1371889847
+Z50 8F:/Work/CPU/cpu/DCACHEL2.v
+Z51 FF:/Work/CPU/cpu/DCACHEL2.v
+L0 2
+R19
+r1
+31
+R21
+Z52 !s100 ]=FGZ8Sc@Kek;K8AVJe`m3
+Z53 !s108 1371898978.861000
+Z54 !s107 DEF.v|F:/Work/CPU/cpu/DCACHEL2.v|
+Z55 !s90 -reportprogress|300|-work|work|-vopt|F:/Work/CPU/cpu/DCACHEL2.v|
+!i10b 1
+!s85 0
+vdmemory
+Z56 IRlI_H5BBzX?L4SV[J]VMT2
+Z57 V[M>BB[AFa5oBM72PfS`J:2
+R15
+R37
+Z58 FDMEMORY.v
+R38
+R39
+L0 8
+R19
+r1
+31
+R40
+R41
+R42
+R21
+Z59 !s100 XP]8giiTagU^4DzD77[`@1
+!i10b 1
+!s85 0
+vexcute
+Z60 I6R?3]QmHS5cLNlmE[^W9E0
+Z61 VU`z_k8?3n_<fZfe1>]3_]0
+R15
+R37
+FEX.v
+R38
+R39
+L0 2
+R19
+r1
+31
+R40
+R41
+R42
+R21
+Z62 !s100 l6T[n3NCY3PLXMY4T9YiO2
+!i10b 1
+!s85 0
+vicache
+Z63 IM7:U>IUkgWinzcFlzY2bg1
+Z64 VgXdXdmRDcI3;n;o5Kic9d0
+R15
+R37
+Z65 FICACHE.v
+R38
+R39
+L0 2
+R19
+r1
+31
+R40
+R41
+R42
+R21
+Z66 !s100 Z<6I@YBa^HPKlaYJoY3WZ0
+!i10b 1
+!s85 0
+vifetch
+Z67 IdKJK8BZz<ARF4Y7BWD>BQ3
+Z68 VNfje?1]j;Ic^QnaoP8M1m0
+R15
+R37
+FIF.v
+R38
+R39
+L0 2
+R19
+r1
+31
+R40
+R41
+R42
+R21
+Z69 !s100 GM8<5j_0l2nUi^8`lO?:>1
+!i10b 1
+!s85 0
+vimemory
+Z70 I1g<0em=bha2Vz<FTQ1cd@2
+Z71 VlHji_akoIDdPjKaLD@goU0
+R15
+R37
+Z72 FIMEMORY.v
+R38
+R39
+L0 8
+R19
+r1
+31
+R40
+R41
+R42
+R21
+Z73 !s100 l1ngR;NIIlchGj52M3dCc3
+!i10b 1
+!s85 0
+vpc
+Z74 I4N2>?J0QSS7RP0=6UkNgI2
+Z75 ViYmQlHQD9F;]EM<`G>bh31
+R15
+R37
+FPC.v
+R38
+R39
+L0 2
+R19
+r1
+31
+R40
+R41
+R42
+R21
+Z76 !s100 ]6dMVkBSz6mKhQiSad>[O2
+!i10b 1
+!s85 0
+vregister
+Z77 I]GDH`=Q27jhTbWK<IFSfH2
+Z78 VGnCg2HHfJT3NB3MCXHlNO1
+R15
+R37
+Z79 FREGISTER.v
+R38
+R39
+L0 2
+R19
+r1
+31
+R40
+R41
+R42
+R21
+Z80 !s100 h<eSW_gZlUEo1c85cX`1a3
+!i10b 1
+!s85 0
+vrs
+Z81 IljiB1cgM2aaL9i1`goL:_2
+Z82 V<d7]2N9]RnX[AUDSGC8>P3
+R15
+Z83 w1371890268
+Z84 8F:/Work/CPU/cpu/RS.v
+Z85 FF:/Work/CPU/cpu/RS.v
+L0 2
+R19
+r1
+31
+R21
+!i10b 1
+Z86 !s100 ;9k_YXYU>Qbb3LEK]FR@K2
+!s85 0
+Z87 !s108 1371913360.325000
+Z88 !s107 DEF.v|F:/Work/CPU/cpu/RS.v|
+Z89 !s90 -reportprogress|300|-work|work|-vopt|F:/Work/CPU/cpu/RS.v|

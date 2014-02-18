@@ -1,0 +1,19 @@
+package bigproject.translate;
+
+import java.util.List;
+
+import bigproject.interm.Interm;
+
+public class CompUnit {
+
+	public List<Interm> interms = null;
+	public Label label = null;
+	public Level level = null;
+	
+	public CompUnit(List<Interm> a, Label b, Level c) {
+		interms = a;
+		label = b;
+		level = c;
+	}
+	
+}

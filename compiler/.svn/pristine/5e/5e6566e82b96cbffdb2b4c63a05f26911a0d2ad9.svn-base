@@ -1,0 +1,50 @@
+package bigproject.interm;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import bigproject.assem.Assem;
+import bigproject.translate.Label;
+import bigproject.translate.Temp;
+
+public class IfFalse extends Interm {
+
+	public Temp cond = null;
+	public Label label = null;
+	
+	public IfFalse(Temp a, Label b) {
+		cond = a;
+		label = b;
+	}
+	
+	public String toString() {
+		return "if " + cond + " false goto " + label;
+	}
+	
+	@Override
+	public List<Assem> gen() {
+		List<Assem> result = new ArrayList<Assem>();
+		result.add(new Assem("beqz %, %", cond, label));
+		return result;
+	}
+	
+	@Override
+	public Set<Temp> use() {
+		Set<Temp> set = new HashSet<Temp>();
+		set.add(cond);
+		return set;
+	}
+	
+	@Override
+	public void replaceLabel(Label oldl, Label newl) {
+		if (label.equals(oldl))
+			label = newl;
+	}
+	
+	@Override
+	public Label getLabel() {
+		return label;
+	}
+}

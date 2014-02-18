@@ -1,0 +1,19 @@
+package bigproject.interm;
+
+import bigproject.translate.Label;
+import bigproject.translate.Temp;
+
+public class MoveL extends Interm {
+
+	public Temp dest = null;
+	public Label source = null;
+	
+	public MoveL(Temp a, Label b) {
+		dest = a;
+		source = b;
+	}
+	
+	public String toString() {
+		return dest + " = " + source;
+	}
+}

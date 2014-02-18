@@ -1,0 +1,54 @@
+package bigproject.semant;
+
+import java.io.IOException;
+
+import org.antlr.v4.runtime.*;
+
+import bigproject.ast.*;
+import bigproject.syntactic.CTXLexer;
+import bigproject.syntactic.CTXParser;
+
+public class SementText {
+	
+	public static class MyListener extends BaseErrorListener {
+		@Override
+		public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+								int line, int charPositionInLine, String msg, RecognitionException e)
+		{
+			System.out.println('1');
+			System.exit(1);
+		}
+	}
+	
+	public static String pathOf(String filename) {
+		return SementText.class.getResource(filename).getPath();
+	}
+
+	public static void main(String argv[]) throws IOException {
+		
+		ANTLRFileStream file1 = new ANTLRFileStream(argv[0]);
+		try {
+			
+			CTXLexer lexer = new CTXLexer(file1);
+			CommonTokenStream tokens = new CommonTokenStream(lexer);
+			CTXParser parser = new CTXParser(tokens);
+			parser.removeErrorListeners();
+			parser.addErrorListener(new MyListener());
+			Program tree = (Program) parser.program().v;
+			Semant semant = new Semant();
+			semant.checkProgram(tree);
+		
+			if (!semant.hasError())
+				System.out.println('0');
+			else {
+				System.out.println('1');
+				System.exit(1);
+			}
+		} catch (Exception e) {
+			System.out.println('1');
+			System.exit(1);
+		}
+
+	}
+	
+}

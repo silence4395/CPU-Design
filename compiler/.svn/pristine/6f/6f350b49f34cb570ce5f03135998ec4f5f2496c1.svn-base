@@ -1,0 +1,12 @@
+package bigproject.interm;
+
+import java.util.List;
+
+import bigproject.assem.Assem;
+
+public class Interm {
+
+	public List<Assem> gen() {
+		return null;
+	}
+}

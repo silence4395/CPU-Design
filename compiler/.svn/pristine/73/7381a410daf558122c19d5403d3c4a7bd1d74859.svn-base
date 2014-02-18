@@ -1,0 +1,13 @@
+package bigproject.ast;
+
+import java.util.List;
+
+public class Arguments extends Exp {
+
+	public List<Exp> augus = null;
+	
+	public Arguments(List<Exp> a) {
+		augus = a;
+	}
+
+}

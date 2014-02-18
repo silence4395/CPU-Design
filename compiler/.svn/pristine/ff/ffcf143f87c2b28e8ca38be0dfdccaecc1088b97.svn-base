@@ -1,0 +1,824 @@
+package bigproject.semant;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bigproject.ast.*;
+import bigproject.env.*;
+import bigproject.symbol.Symbol;
+import bigproject.types.*;
+import bigproject.types.Record.RecordField;
+
+public class Semant {
+	
+	private Env env = null;
+	
+	public Semant() {
+		this(new Env());
+	}
+	
+	public Semant(Env a) {
+		env = a;
+	}
+	
+	private boolean errorflag = false;
+	
+	private void error(String reason) {
+		if (!errorflag) 
+			System.out.println(reason);
+		errorflag = true;
+	}
+	
+	public boolean hasError() {
+		return errorflag;
+	}
+
+	private int loopcount = 0;
+	
+	public void checkProgram(Program node) {
+		loopcount = 0;
+		for (DeclStat decl: node.body) {
+			checkDeclStat((DeclStat) decl);
+		}
+	}
+	
+	private void checkDeclStat(DeclStat node) {
+		if (node instanceof TypeDecl)
+			checkDeclStat((TypeDecl) node);
+		if (node instanceof VarDecl)
+			checkDeclStat((VarDecl) node);
+		if (node instanceof FunDecl)
+			checkDeclStat((FunDecl) node);
+	}
+	
+	private class NameAndType {
+		public Symbol name;
+		public Type type;
+		public NameAndType(Symbol a, Type b) {
+			name = a;
+			type = b;
+		}
+		public void setType(Type a) {
+			type = a;
+		}
+	}
+	
+	private Type conbine(Type target, Type s) {
+		Type result = target;
+		if (result == null)
+			result = s;
+		else if (result.actual() instanceof Function)
+			((Function) result.actual()).setReturnType(s);
+		else if (result.actual() instanceof Pointer)
+			((Pointer) result.actual()).bind(s);
+		return result;
+	}
+	
+	private void checkDeclStat(TypeDecl node) {
+		Type type;
+		type = checkTy(node.type);
+		
+		List<NameAndType> symlist = checkDeclors(node.decls);
+		for (int i=0; i<symlist.size(); i++) {
+			Type temp = conbine(symlist.get(i).type, type);
+			if (env.typeenv.redeclAtSameLevel(symlist.get(i).name)) {
+				error("Type redeclaration!");
+				return;
+			}
+			env.typeenv.put(symlist.get(i).name, temp);
+		}
+	}
+	
+	private List<NameAndType> checkDeclors(Declors node) {
+		List<NameAndType> result = new ArrayList<NameAndType>();
+		for (Declor decl: node.body)
+			result.add(checkDeclor(decl));
+		
+		for (int i=0; i<result.size(); i++)
+			for (int j=i+1; j<result.size(); j++)
+				if (result.get(i).name == result.get(j).name) {
+					error("Same names in one sentence!");
+					return new ArrayList<NameAndType>();
+				}
+		
+		return result;
+	}
+
+	private NameAndType checkDeclor(Declor node) {
+		if (node instanceof FunDeclor)
+			return checkDeclor((FunDeclor) node);
+		if (node instanceof ArrayDeclor)
+			return checkDeclor((ArrayDeclor) node);
+		return null;
+	}
+	
+	private NameAndType checkDeclor(FunDeclor node) {
+		NameAndType result = null;
+		result = checkPlanDeclor(node.name);
+		
+		Record parameters = checkParams(node.parameters);
+		
+		Type temp = result.type;
+		result.setType(new Function(parameters, temp));
+		
+		return result;
+	}
+	
+	private Record checkParams(Params node) {
+		if (node == null) 
+			return new Record();
+		List<NameAndType> list = new ArrayList<NameAndType>();
+		for (PlanDecl decl: node.parameters)
+			list.add(checkPlanDecl(decl));
+		
+		for (int i=0; i<list.size(); i++)
+			for (int j=i+1; j<list.size(); j++)
+				if (list.get(i).name == list.get(j).name) {
+					error("Same name in one parameter declaration!");
+					return new Record();
+				}
+		
+		Record result = new Record();
+		for (int i=0; i<list.size(); i++)
+			result.addField(list.get(i).name, list.get(i).type);
+		if (node.bdc)
+			result.addField(Symbol.symbol("..."), Type.Nil);
+		
+		return result;
+	}
+
+	private NameAndType checkPlanDecl(PlanDecl node) {
+		Type type = checkTy(node.type);
+		NameAndType result = checkDeclor(node.decl);
+		result.type = conbine(result.type, type);
+		return result;
+	}
+
+	private class ValueAndType {
+		public Integer value = null;
+		public Type type = null;
+		public boolean lvalue;
+		public ValueAndType(Integer a, Type b) {
+			value = a;
+			type = b;
+			lvalue = false;
+		}
+	}
+	
+	private NameAndType checkDeclor(ArrayDeclor node) {
+		NameAndType result = null;
+		result = checkPlanDeclor(node.name);
+		
+		if (node.dim.size() == 0)
+			return result;
+		
+		Type array = null;
+		for (int i=node.dim.size()-1; i>=0; i--) {
+			ValueAndType size = null;
+			size = checkExp(node.dim.get(i));
+			if (!checkInt(size.type)) {
+				error("Array size must be int!");
+				return new NameAndType(null, Type.Void);
+			}
+			if (size.value.intValue() < 0) {
+				error("No negative array size!");
+				return new NameAndType(null, Type.Void);
+			}
+			Array temp = new Array(array, size.value);
+			array = temp;
+		}
+		
+		if (result.type == null)
+			result.setType(array);
+		else if (result.type instanceof Pointer)
+			((Pointer) result.type).bind(array);
+		
+		return result;
+	}
+
+	private boolean checkInt(Type type) {
+		return type.coerceTo(Type.Int);
+	}
+
+	private NameAndType checkPlanDeclor(PlanDeclor node) {
+		Pointer result = null;
+		for (int i=0; i<node.stars; i++) {
+			Pointer temp = new Pointer(result);
+			result = temp;
+		}
+		return new NameAndType(node.name, result);
+	}
+
+	private Type checkTy(Ty node) {
+		if (node instanceof VoidTy)
+			return Type.Void;
+		if (node instanceof CharTy)
+			return Type.Char;
+		if (node instanceof IntTy)
+			return Type.Int;
+		if (node instanceof NameTy)
+			return checkTy((NameTy) node);
+		if (node instanceof RecordTy)
+			return checkTy((RecordTy) node);
+		return Type.Nil;
+	}
+	
+	private Type checkTy(NameTy node) {
+		Type result = (Type) env.typeenv.get(node.name);
+		if (result == null) {
+			error("Unknown type!");
+			return Type.Nil;
+		}
+		return result.actual();
+	}
+
+	private boolean checkRecordType(Symbol name, int struct_union) {
+		Type temp = (Type) env.typeenv.get(name);
+		if ((temp instanceof Name) && (((Name)temp).recordclass == struct_union))
+			return true;
+		else
+			return false;
+	}
+	
+	private Record checkRecordField(RecordTy node) {
+		
+		Record result = null;
+		if (node.recordclass == 0)
+			result = new Struct();
+		else
+			result = new Union();
+		
+		Type fieldtype = null;
+		List<NameAndType> symlist = null;
+		for (int i=0; i<node.types.size(); i++) {
+			fieldtype = checkTy(node.types.get(i));
+			symlist = checkDeclors(node.decls.get(i));
+			for (int j=0; j<symlist.size(); j++) {
+				Type temp = conbine(symlist.get(j).type, fieldtype);
+				if (result.hasField(symlist.get(j).name)) {
+					error("Same name in one record!");
+					return result;
+				}
+				result.addField(symlist.get(j).name, temp);
+			}
+		}
+		
+		return result;
+	}
+	
+	private Type checkTy(RecordTy node) {
+		
+		if (node.name == null)
+			return checkRecordField(node);
+		
+		Name result = new Name(node.name);
+		
+		if (node.recordclass == 0) {
+			if (checkRecordType(node.name, 1)) {
+				error("Record should be struct!");
+				return Type.Nil;
+			}
+			result.setStruct();
+		} else {
+			if (checkRecordType(node.name, 0)) {
+				error("Record should be union!");
+				return Type.Nil;
+			}
+			result.setUnion();
+		}
+	
+		if ((node.types == null) && (node.decls == null)) {
+			Type anotherresult = (Type) env.typeenv.get(node.name);
+			if (anotherresult == null)
+				env.typeenv.put(node.name, result);
+			else
+				return anotherresult;
+			return result;
+		}
+		
+		Type temp = (Type) env.typeenv.get(node.name);
+		if (env.typeenv.redeclAtSameLevel(node.name) && 
+		    (((Name) temp).acttype != null)) {
+			error("Record type redeclaration");
+			return Type.Nil;
+		}
+		if (temp == null)
+			env.typeenv.put(node.name, result);
+		
+		Record field = checkRecordField(node);
+
+		result = (Name) env.typeenv.get(node.name);
+		result.bind(field);
+		env.typeenv.setLevel(node.name);
+		
+		return result;
+	}
+
+	private void checkDeclStat(VarDecl node) {
+		Type type = checkTy(node.type);
+		if ((type instanceof Name) && (((Name) type).acttype == null)) {
+			error("Name is not defined!");
+			return;
+		}
+		checkInitDeclors(node.initdecl, type);
+	}
+	
+	private void checkInitDeclors(InitDeclors node, Type elementtype) {
+		if (node == null)
+			return;
+		
+		List<NameAndType> result = new ArrayList<NameAndType>();
+		for (InitDeclor decl: node.decls)
+			result.add(checkInitDeclor(decl, elementtype));
+		
+		for (int i=0; i<result.size(); i++)
+			for (int j=i+1; j<result.size(); j++)
+				if (result.get(i).name == result.get(j).name) {
+					error("Same name in one sentence!");
+					return;
+				}
+		
+	}
+
+	private NameAndType checkInitDeclor(InitDeclor node, Type elementtype) {
+		NameAndType result = checkDeclor(node.name);
+		result.type = conbine(result.type, elementtype);
+		
+		if (env.varenv.redeclAtSameLevel(result.name)) {
+			error("Var redeclaration!");
+			return new NameAndType(null, Type.Void);
+		}
+		env.varenv.put(result.name, new Entry(result.type));
+
+		checkIniter(node.init, result.type);
+		
+		return result;
+	}
+
+	private void checkIniter(Initer node, Type elementtype) {
+		if (node == null)
+			return;
+		
+		if ((elementtype == null) || (elementtype.actual() instanceof Function)) {
+			error("Init type can't be function!");
+			return;
+		}
+		
+		if (node.anotherbody == null) {
+			ValueAndType value = checkExp(node.body);
+			if (!value.type.coerceTo(elementtype))
+				error("Init type can't match!");
+			return;
+		}
+		
+		if ((elementtype.actual() instanceof Array) || (elementtype instanceof Record)) {
+			if (elementtype.actual() instanceof Array)
+				checkIniters(node.anotherbody, ((Array) elementtype.actual()).elementtype);
+			if (elementtype.actual() instanceof Record)
+				checkIniters(node.anotherbody, ((Record) elementtype.actual()).getFieldsType());
+			return;
+		}
+		
+		error("Uncanny error!");
+	}
+
+	private void checkIniters(Initers node, List<Type> elementtypes) {
+		if (elementtypes.size() != node.body.size()) {
+			error("Record field size match!");
+			return;
+		}
+		for (int i=0; i<node.body.size(); i++)
+			checkIniter(node.body.get(i), elementtypes.get(i));
+	}
+
+	private void checkIniters(Initers node, Type elementtype) {
+		if (elementtype == null) {
+			error("Init type can't match!");
+			return;
+		}
+		for (Initer initer: node.body) {
+			checkIniter(initer, elementtype);
+		}
+	}
+
+	private void checkDeclStat(FunDecl node) {
+		Type returntype = checkTy(node.type);
+		if ((returntype instanceof Name) && (((Name) returntype).acttype == null)) {
+			error("Name is not defined!");
+			return;
+		}		
+		NameAndType name = checkPlanDeclor(node.name);
+		name.type = conbine(name.type, returntype);
+		
+		Record parameters = checkParams(node.parameters);
+		
+		Function fun = new Function(parameters, name.type);
+		if (!checkFunDefValid(fun, name.name)) {
+			error("Wrong function defination!");
+			return;
+		}
+		
+		env.beginScope();
+		if (parameters != null)
+			for (RecordField field: parameters.fields)
+				env.varenv.put(field.name, new Entry(field.type));
+	
+		checkStat(node.body, returntype);
+		
+		env.endScope();
+	}
+
+	private boolean checkFunDefValid(Function fun, Symbol name) {
+		if (env.varenv.redeclAtSameLevel(name)) {
+			Type oldfun = ((Entry) env.varenv.get(name)).type;
+			if (!(oldfun.actual() instanceof Function))
+				return false;
+			if (((Function) oldfun).defined)
+				return false;
+			if (!((Function) oldfun).returntype.coerceTo(fun.returntype))
+				return false;
+			List<Type> oldargu = ((Function) oldfun).argumenttype.getFieldsType();
+			List<Type> newargu = fun.argumenttype.getFieldsType();
+			if (oldargu.size() != newargu.size())
+				return false;
+			for (int i=0; i<oldargu.size(); i++)
+				if (!oldargu.get(i).coerceTo(newargu.get(i)))
+					return false;
+			return true;
+		}
+		env.varenv.put(name, new Entry(fun));
+		return true;
+	}
+
+	private void checkStat(CompStat node, Type returntype) {
+		for (DeclStat decl: node.declors)
+			checkDeclStat(decl);
+		for (Stat stat: node.stats)
+			checkStat(stat, returntype);
+	}
+	
+	private void checkStat(Stat node, Type returntype) {
+		if (node instanceof ExpStat)
+			checkStat((ExpStat) node, returntype);
+		if (node instanceof CompStat) {
+			env.beginScope();
+			checkStat((CompStat) node, returntype);
+			env.endScope();
+		}
+		if (node instanceof SelectStat)
+			checkStat((SelectStat) node, returntype);
+		if (node instanceof WhileStat)
+			checkStat((WhileStat) node, returntype);
+		if (node instanceof ForStat)
+			checkStat((ForStat) node, returntype);
+		if (node instanceof JumpStat)
+			checkStat((JumpStat) node, returntype);
+	}
+
+	private void checkStat(ExpStat node, Type returntype) {
+		if (node.body != null)
+			checkExp(node.body);
+	}
+
+	private void checkStat(SelectStat node, Type returntype) {
+		ValueAndType cond = checkExp(node.condition);
+		if (!checkInt(cond.type)) {
+			error("If condition must be int!");
+			return;
+		}
+		checkStat(node.thenclause, returntype);
+		if (node.elseclause != null)
+			checkStat(node.elseclause, returntype);
+	}
+
+	private void checkStat(WhileStat node, Type returntype) {
+		ValueAndType cond = checkExp(node.condition);
+		if (!checkInt(cond.type)){
+			error("While condition must be int!");
+			return;
+		}
+		loopcount = loopcount + 1;
+		checkStat(node.body, returntype);
+		loopcount = loopcount - 1;
+	}
+
+	private void checkStat(ForStat node, Type returntype) {
+		if (node.firstcond != null) {
+			ValueAndType cond = checkExp(node.firstcond);
+			if (!checkInt(cond.type)){
+				error("For first condition must be int!");
+				return;
+			}
+		}
+		if (node.secondcond != null) {
+			ValueAndType cond = checkExp(node.secondcond);
+			if (!checkInt(cond.type)){
+				error("For second condition must be int!");
+				return;
+			}
+		}
+		if (node.thirdcond != null) {
+			ValueAndType cond = checkExp(node.thirdcond);
+			if (!checkInt(cond.type)){
+				error("For third condition must be int!");
+				return;
+			}
+		}
+		loopcount = loopcount + 1;
+		checkStat(node.body, returntype);
+		loopcount = loopcount - 1;
+	}
+
+	private void checkStat(JumpStat node, Type returntype) {
+		if ((node instanceof ContinueStat) || (node instanceof BreakStat))
+			if (loopcount < 1) {
+				error("Jump must be in a loop!");
+				return;
+			}
+		if (node instanceof ReturnStat)
+			if (((ReturnStat) node).result != null) {
+				ValueAndType returnvalue = checkExp(((ReturnStat) node).result);
+				if (!returnvalue.type.coerceTo(returntype)) {
+					error("Return type can't match!");
+					return;
+				}
+			}
+	}
+
+	private ValueAndType checkExp(Exp node) {
+		if (node instanceof CommaExp)
+			return checkExp((CommaExp) node);
+		if (node instanceof AssignExp)
+			return checkExp((AssignExp) node);
+		if (node instanceof OpExp)
+			return checkExp((OpExp) node);
+		if (node instanceof CoerceExp)
+			return checkExp((CoerceExp) node);
+		if (node instanceof SingleOpExp)
+			return checkExp((SingleOpExp) node);
+		if (node instanceof SizeofExp)
+			return checkExp((SizeofExp) node);
+		if (node instanceof PostfixExp)
+			return checkExp((PostfixExp) node);
+		if (node instanceof VarExp)
+			return checkExp((VarExp) node);
+		if (node instanceof StringExp)
+			return checkExp((StringExp) node);
+		if (node instanceof IntExp)
+			return checkExp((IntExp) node);
+		if (node instanceof CharExp)
+			return checkExp((CharExp) node);
+		return null;
+	}
+	
+	private ValueAndType checkExp(CharExp node) {
+		return new ValueAndType(new Integer((int) node.value), Type.Char);
+	}
+
+	private ValueAndType checkExp(IntExp node) {
+		return new ValueAndType(new Integer(node.value), Type.Int);
+	}
+
+	private ValueAndType checkExp(StringExp node) {
+		Type str = new Pointer(Type.Char);
+		return new ValueAndType(null, str);
+	}
+
+	private ValueAndType checkExp(VarExp node) {
+		Entry var = (Entry) env.varenv.get(node.name);
+		if (var == null) {
+			error("Unknown var!");
+			return new ValueAndType(null, Type.Void);
+		}
+		ValueAndType result = new ValueAndType(null, var.type);
+		result.lvalue = true;
+		return result;
+	}
+
+	private ValueAndType checkExp(PostfixExp node) {
+		ValueAndType head = checkExp(node.body);
+		for (Postfix postfix: node.postfixes) {
+			if (postfix instanceof ArrayFix) {
+				if (!(head.type.actual() instanceof Pointer)) {
+					error("Here must be an array type!");
+					return new ValueAndType(null, Type.Void);
+				}
+				ValueAndType exp = checkExp(((ArrayFix) postfix).body);
+				if (!checkInt(exp.type)) {
+					error("Array index must be an int!");
+					return new ValueAndType(null, Type.Void);
+				}
+				head.type = ((Pointer) head.type.actual()).elementtype;
+				head.lvalue = true;
+			} else if (postfix instanceof FunFix) {
+				if (!(head.type.actual() instanceof Function)) {
+					error("Here must be a function type!");
+					return new ValueAndType(null, Type.Void);
+				}
+				checkArguments((Function) head.type.actual(), ((FunFix) postfix).argus);
+				head.type = ((Function) head.type).returntype;
+				head.lvalue = false;
+			} else if (postfix instanceof FieldFix) {
+				if (!(head.type.actual() instanceof Record)) {
+					error("Here must be a record type!");
+					return new ValueAndType(null, Type.Void);
+				}
+				Record rec = (Record) head.type.actual();
+				if (!rec.hasField(((FieldFix) postfix).name)) {
+					error("Field name wrong!");
+					return new ValueAndType(null, Type.Void);
+				}
+				head.type = rec.getField(((FieldFix) postfix).name);	
+				head.lvalue = true;
+			} else if (postfix instanceof BelongFix) {
+				if (!(head.type.actual() instanceof Pointer)) {
+					error("Here must be a pointer!");
+					return new ValueAndType(null, Type.Void);
+				}
+				if (!(((Pointer) head.type.actual()).elementtype.actual() instanceof Record)) {
+					error("Here must be a pointer of record!");
+					return new ValueAndType(null, Type.Void);
+				}
+				Record rec = (Record) ((Pointer) head.type.actual()).elementtype.actual();
+				if (!rec.hasField(((BelongFix) postfix).name)) {
+					error("(pointer) field name wrong!");
+					return new ValueAndType(null, Type.Void);
+				}
+				head.type = rec.getField(((BelongFix) postfix).name);
+				head.lvalue = true;
+			} else if ((postfix instanceof DuPlusFix) ||
+					   (postfix instanceof DuMinusFix)) {
+				if ((!head.lvalue) || (head.type instanceof Record)) {
+					error("++/-- must be with a lvalue!");
+					return new ValueAndType(null, Type.Void);
+				}
+				head.lvalue = false;
+			}
+		}
+		return head;
+	}
+
+	private void checkArguments(Function fun, Arguments argus) {
+		List<RecordField> validargus = fun.argumenttype.fields;
+		if (argus == null) {
+			if ((validargus.size() != 0) && (validargus.get(0).type != Type.Nil))
+				error("Arguments can't match!(1)");
+		} else {
+			for (int i=0; i<argus.argus.size(); i++) {
+				if (validargus.size() <= i) {
+					error("Arguments can't match!(2)");
+					return;
+				}
+				if (validargus.get(i).type == Type.Nil)
+					break;
+				ValueAndType exp = checkExp(argus.argus.get(i));
+				if (!exp.type.coerceTo(validargus.get(i).type)) {
+					error("Arguments can't match!(3)");
+					return;
+				}
+			}
+		}
+	}
+
+	private ValueAndType checkExp(SizeofExp node) {
+		if (node.body == null)
+			checkTy(node.type);
+		if (node.type == null)
+			checkExp(node.body);
+		return new ValueAndType(null, Type.Int);
+	}
+
+	private ValueAndType checkExp(SingleOpExp node) {
+		// TODO more checking
+		ValueAndType exp = checkExp(node.body);
+		if ((exp.type.actual() instanceof Array) ||
+			(exp.type.actual() instanceof Record) ||
+			(exp.type.actual() instanceof Function)) {
+			error("SingleOp must be with a int/pointer!");
+			return new ValueAndType(null, Type.Void);
+		}
+		if ((node.op == SingleOpExp.DuPlus) || (node.op == SingleOpExp.DuMinus)) {
+			if (!(exp.lvalue)) {
+				error("lvalue needed following ++/--!");
+				return new ValueAndType(null, Type.Void);
+			}
+			if (!((exp.type.actual() instanceof Int) ||
+				  (exp.type.actual() instanceof Pointer))) {
+				error("Int needed following ++/--!");
+				return new ValueAndType(null, Type.Void);
+			}
+			exp.lvalue = false;
+		} else if (node.op == SingleOpExp.Star) {
+			if (!(exp.type.actual() instanceof Pointer)) {
+				error("Pointer needed following star!");
+				return new ValueAndType(null, Type.Void);
+			}
+			exp.type = ((Pointer) exp.type).elementtype;
+			exp.lvalue = true;
+		} else if (node.op == SingleOpExp.At) {
+			if (!(exp.lvalue)) {
+				error("lvalue needed following @!");
+				return new ValueAndType(null, Type.Void);
+			}
+			exp.type = new Pointer(exp.type);
+			exp.lvalue = false;
+		} else if (node.op == SingleOpExp.Excal){
+			if (!(exp.type.actual() instanceof Int) && 
+				 (exp.type.actual() instanceof Pointer)) {
+				error("Int/Pointer needed following !");
+				return new ValueAndType(null, Type.Void);
+			}
+			exp.lvalue = false;
+		}
+		return exp;
+	}
+
+	private ValueAndType checkExp(CommaExp node) {
+		ValueAndType result = null;
+		for (Exp eachexp: node.exps)
+			result = checkExp(eachexp);
+		result.lvalue = false;
+		return result;
+	}
+
+	private ValueAndType checkExp(AssignExp node) {
+		ValueAndType left = checkExp(node.left);
+		ValueAndType right = checkExp(node.right);
+		if (!left.lvalue) {
+			error("Assign expression left must be lvalue!");
+			return new ValueAndType(null, Type.Void);
+		}
+		if (!checkAssign(left.type, right.type)) {
+			error("Assign expression must has same type!");
+			return new ValueAndType(null, Type.Void);
+		}
+		if ((left.type.actual() instanceof Function) ||
+			(left.type.actual() instanceof Array)) {
+			error("Array can't assign!");
+			return new ValueAndType(null, Type.Void);
+		}
+		right.lvalue = false;
+		return right;
+	}
+	
+	private boolean checkAssign(Type type, Type type2) {
+		if (type2.coerceTo(type))
+			return true;
+		if ((type instanceof Pointer) && (type2 instanceof Int))
+			return true;
+		if ((type2 instanceof Pointer) && (type instanceof Int))
+			return true;
+		return false;
+	}
+
+	private ValueAndType checkExp(OpExp node) {
+		// TODO more checking & value calculate
+		
+		if (node.explist.size() == 1)
+			return checkExp(node.explist.get(0));
+		
+		ValueAndType exp = checkExp(node.explist.get(0));
+		if ((exp.type.actual() instanceof Array) ||
+			(exp.type.actual() instanceof Record)) {
+			error("Array/Function can't calculate!");
+			return new ValueAndType(null, Type.Void);
+		}
+		for (int i=1; i<node.explist.size(); i++) {
+			ValueAndType exp2 = checkExp(node.explist.get(i));
+			if ((exp2.type.actual() instanceof Array) ||
+				(exp2.type.actual() instanceof Record) ||
+				(!checkCalValid(exp.type, exp2.type))) {
+					error("Calculate types wrong!");
+					return new ValueAndType(null, Type.Void);
+				}
+		}
+		return exp;
+	}
+
+	private boolean checkCalValid(Type type, Type type2) {
+		if (type.coerceTo(type2))
+			return true;
+		return false;
+	}
+
+	private ValueAndType checkExp(CoerceExp node) {
+		Type goal = checkTy(node.type);
+		for (int i=0; i<node.stars; i++) {
+			Pointer temp = new Pointer(goal);
+			goal = temp;
+		}
+		if ((goal.actual() instanceof Array) || (goal.actual() instanceof Function)) {
+			error("Cast type wrong!");
+			return new ValueAndType(null, Type.Void);
+		}
+		ValueAndType source = checkExp(node.body);
+		if (!source.type.coerceTo(goal)) {
+			error("Cast type can't match!");
+			return new ValueAndType(null, Type.Void);
+		}
+		source.lvalue = false;
+		source.type = goal.actual();
+		return source;
+	}
+	
+}

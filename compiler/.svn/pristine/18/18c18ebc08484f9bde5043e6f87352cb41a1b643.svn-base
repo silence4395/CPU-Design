@@ -1,0 +1,390 @@
+	.data
+	.align 2
+L15:
+	.asciiz " O"
+	.align 2
+L16:
+	.asciiz " ."
+	.align 2
+L17:
+	.asciiz "\n"
+	.align 2
+L18:
+	.asciiz "\n"
+	.align 2
+	.text
+	.align 2
+	.globl main
+main:
+	li $k0, 8
+	sw $k0, 0($gp)
+	li $k0, 32
+	sw $k0, 4($gp)
+	lw $k0, 4($gp)
+	move $a0, $k0
+	li $v0, 9
+	syscall
+	move $k0, $v0
+	sw $k0, 4($gp)
+	li $k0, 32
+	sw $k0, 8($gp)
+	lw $k0, 8($gp)
+	move $a0, $k0
+	li $v0, 9
+	syscall
+	move $k0, $v0
+	sw $k0, 8($gp)
+	li $k0, 16
+	sw $k0, 12($gp)
+	lw $k0, 12($gp)
+	sub $k0, $k0, 1
+	sw $k0, 12($gp)
+	li $k0, 8
+	sw $k0, 16($gp)
+	lw $k0, 16($gp)
+	move $a0, $k0
+	li $v0, 9
+	syscall
+	move $k0, $v0
+	sw $k0, 16($gp)
+	lw $k0, 12($gp)
+	mul $k1, $k0, 4
+	sw $k1, 20($gp)
+	lw $k0, 20($gp)
+	move $a0, $k0
+	li $v0, 9
+	syscall
+	move $k0, $v0
+	sw $k0, 20($gp)
+	lw $k0, 20($gp)
+	lw $k1, 16($gp)
+	sw $k0, 0($k1)
+	lw $k0, 12($gp)
+	mul $k1, $k0, 4
+	sw $k1, 20($gp)
+	lw $k0, 20($gp)
+	move $a0, $k0
+	li $v0, 9
+	syscall
+	move $k0, $v0
+	sw $k0, 20($gp)
+	lw $k0, 20($gp)
+	lw $k1, 16($gp)
+	sw $k0, 4($k1)
+	jal cmain
+	li $v0, 10
+	syscall
+L7_printBoard:
+	lw $t0, 8($gp)
+	lw $t1, 0($gp)
+	sw $ra, -4($sp)
+	addiu $sp, $sp, -132
+	sw $t0, 56($sp)
+	sw $t1, 60($sp)
+	sw $t2, 64($sp)
+	sw $t3, 68($sp)
+	sw $t4, 72($sp)
+	sw $t5, 76($sp)
+	sw $t6, 80($sp)
+	li $t2, 0
+L9:
+	bge $t2, $t1, L10
+	li $t3, 0
+L11:
+	bge $t3, $t1, L12
+	move $t4, $t0
+	mul $t5, $t2, 4
+	add $t6, $t4, $t5
+	lw $t4, 0($t6)
+	bne $t4, $t3, L14
+	la $t4, L15
+	move $a0, $t4
+	jal printf
+	j L13
+L14:
+	la $t4, L16
+	move $a0, $t4
+	jal printf
+L13:
+	move $t4, $t3
+	addi $t3, $t3, 1
+	j L11
+L12:
+	la $t3, L17
+	move $a0, $t3
+	jal printf
+	move $t3, $t2
+	addi $t2, $t2, 1
+	j L9
+L10:
+	la $t2, L18
+	lw $t0, 56($sp)
+	lw $t1, 60($sp)
+	lw $t2, 64($sp)
+	lw $t3, 68($sp)
+	lw $t4, 72($sp)
+	lw $t5, 76($sp)
+	lw $t6, 80($sp)
+	addiu $sp, $sp, 132
+	lw $ra, -4($sp)
+	jr $ra
+L19_search:
+	lw $t1, 8($gp)
+	lw $t3, 0($gp)
+	lw $t4, 16($gp)
+	lw $t0, 4($gp)
+	sw $ra, -4($sp)
+	addiu $sp, $sp, -256
+	move $t5, $a0
+	sw $t0, 180($sp)
+	sw $t1, 184($sp)
+	sw $t2, 188($sp)
+	sw $t3, 192($sp)
+	sw $t4, 196($sp)
+	sw $t5, 200($sp)
+	sw $t6, 204($sp)
+	sw $t7, 208($sp)
+	sw $s0, 212($sp)
+	sw $s1, 216($sp)
+	bne $t5, $t3, L22
+	jal L7_printBoard
+	j L24
+L22:
+	li $t6, 0
+L23:
+	bge $t6, $t3, L24
+	move $t7, $t0
+	mul $s0, $t6, 4
+	add $s1, $t7, $s0
+	lw $t7, 0($s1)
+	seq $s0, $t7, 0
+	blez $s0, L26
+	move $t7, $t4
+	lw $t7, 0($t7)
+	add $s0, $t6, $t5
+	mul $s1, $s0, 4
+	add $s0, $t7, $s1
+	lw $t7, 0($s0)
+	seq $s0, $t7, 0
+	blez $s0, L26
+	move $t7, $t4
+	lw $t7, 4($t7)
+	add $s0, $t6, $t3
+	sub $s0, $s0, 1
+	sub $s0, $s0, $t5
+	mul $s1, $s0, 4
+	add $s0, $t7, $s1
+	lw $t7, 0($s0)
+	seq $s0, $t7, 0
+	sgt $t2, $s0, 0
+L26:
+	beqz $t2, L25
+	move $t7, $t4
+	lw $t7, 4($t7)
+	add $s0, $t6, $t3
+	sub $s0, $s0, 1
+	sub $s0, $s0, $t5
+	mul $s1, $s0, 4
+	add $t7, $t7, $s1
+	li $s0, 1
+	sw $s0, 0($t7)
+	move $t7, $t4
+	lw $t7, 0($t7)
+	add $s0, $t6, $t5
+	mul $s1, $s0, 4
+	add $t7, $t7, $s1
+	li $s0, 1
+	sw $s0, 0($t7)
+	move $t7, $t0
+	mul $s0, $t6, 4
+	add $t7, $t7, $s0
+	li $s0, 1
+	sw $s0, 0($t7)
+	move $t7, $t1
+	mul $s0, $t5, 4
+	add $t7, $t7, $s0
+	sw $t6, 0($t7)
+	addi $t7, $t5, 1
+	move $a0, $t7
+	jal L19_search
+	move $t7, $t4
+	lw $t7, 4($t7)
+	add $s0, $t6, $t3
+	sub $s0, $s0, 1
+	sub $s0, $s0, $t5
+	mul $s1, $s0, 4
+	add $t7, $t7, $s1
+	li $s0, 0
+	sw $s0, 0($t7)
+	move $t7, $t4
+	lw $t7, 0($t7)
+	add $s0, $t6, $t5
+	mul $s1, $s0, 4
+	add $t7, $t7, $s1
+	li $s0, 0
+	sw $s0, 0($t7)
+	move $t7, $t0
+	mul $s0, $t6, 4
+	add $t7, $t7, $s0
+	li $s0, 0
+	sw $s0, 0($t7)
+L25:
+	move $t7, $t6
+	addi $t6, $t6, 1
+	j L23
+	lw $t0, 180($sp)
+	lw $t1, 184($sp)
+	lw $t2, 188($sp)
+	lw $t3, 192($sp)
+	lw $t4, 196($sp)
+	lw $t5, 200($sp)
+	lw $t6, 204($sp)
+	lw $t7, 208($sp)
+	lw $s0, 212($sp)
+	lw $s1, 216($sp)
+	addiu $sp, $sp, 256
+	lw $ra, -4($sp)
+	jr $ra
+cmain:
+	sw $ra, -4($sp)
+	addiu $sp, $sp, -80
+	sw $t0, 4($sp)
+	li $t0, 0
+	move $a0, $t0
+	jal L19_search
+	li $v0, 0
+	j L28
+	lw $t0, 4($sp)
+	addiu $sp, $sp, 80
+	lw $ra, -4($sp)
+	jr $ra
+malloc:
+	li $v0, 9
+	syscall
+	jr $ra
+	
+## Daniel J. Ellard -- 03/13/94
+## printf.asm--
+## an implementation of a simple printf work-alike.
+
+## printf--
+## A simple printf-like function. Understands just the basic forms
+## of the %s, %d, %c, and %% formats, and can only have 3 embedded
+## formats (so that all of the parameters are passed in registers).
+## If there are more than 3 embedded formats, all but the first 3 are
+## completely ignored (not even printed).
+## Register Usage:
+## $a0,$s0 - pointer to format string
+## $a1,$s1 - format argument 1 (optional)
+## $a2,$s2 - format argument 2 (optional)
+## $a3,$s3 - format argument 3 (optional)
+## $s4 - count of formats processed.
+## $s5 - char at $s4.
+## $s6 - pointer to printf buffer
+##
+.text
+.globl printf
+printf:
+subu $sp, $sp, 36 # set up the stack frame,
+sw $ra, 32($sp) # saving the local environment.
+sw $fp, 28($sp)
+sw $s0, 24($sp)
+sw $s1, 20($sp)
+sw $s2, 16($sp)
+sw $s3, 12($sp)
+sw $s4, 8($sp)
+sw $s5, 4($sp)
+sw $s6, 0($sp)
+addu $fp, $sp, 36
+
+# grab the arguments:
+move $s0, $a0 # fmt string
+move $s1, $a1 # arg1 (optional)
+move $s2, $a2 # arg2 (optional)
+move $s3, $a3 # arg3 (optional)
+
+li $s4, 0 # set # of formats = 0
+la $s6, printf_buf # set s6 = base of printf buffer.
+
+printf_loop: # process each character in the fmt:
+lb $s5, 0($s0) # get the next character, and then
+addu $s0, $s0, 1 # bump up $s0 to the next character.
+
+beq $s5, '%', printf_fmt # if the fmt character, then do fmt.
+beq $0, $s5, printf_end # if zero, then go to end.
+
+printf_putc:
+sb $s5, 0($s6) # otherwise, just put this char
+sb $0, 1($s6) # into the printf buffer,
+move $a0, $s6 # and then print it with the
+li $v0, 4 # print_str syscall
+syscall
+
+b printf_loop # loop on.
+
+printf_fmt:
+lb $s5, 0($s0) # see what the fmt character is,
+addu $s0, $s0, 1 # and bump up the pointer.
+
+beq $s4, 3, printf_loop # if we've already processed 3 args,
+# then *ignore* this fmt.
+beq $s5, 'd', printf_int # if 'd', print as a decimal integer.
+beq $s5, 's', printf_str # if 's', print as a string.
+beq $s5, 'c', printf_char # if 'c', print as a ASCII char.
+beq $s5, '%', printf_perc # if '%', print a '%'
+b printf_loop # otherwise, just continue.
+
+printf_shift_args: # shift over the fmt args,
+move $s1, $s2 # $s1 = $s2
+move $s2, $s3 # $s2 = $s3
+
+add $s4, $s4, 1 # increment # of args processed.
+
+b printf_loop # and continue the main loop.
+
+printf_int: # deal with a %d:
+move $a0, $s1 # do a print_int syscall of $s1.
+li $v0, 1
+syscall
+b printf_shift_args # branch to printf_shift_args
+
+printf_str: # deal with a %s:
+move $a0, $s1 # do a print_string syscall of $s1.
+li $v0, 4
+syscall
+b printf_shift_args # branch to printf_shift_args
+
+printf_char: # deal with a %c:
+sb $s1, 0($s6) # fill the buffer in with byte $s1,
+sb $0, 1($s6) # and then a null.
+move $a0, $s6 # and then do a print_str syscall
+li $v0, 4 # on the buffer.
+syscall
+b printf_shift_args # branch to printf_shift_args
+
+printf_perc: # deal with a %%:
+li $s5, '%' # (this is redundant)
+sb $s5, 0($s6) # fill the buffer in with byte %,
+sb $0, 1($s6) # and then a null.
+move $a0, $s6 # and then do a print_str syscall
+li $v0, 4 # on the buffer.
+syscall
+b printf_loop # branch to printf_loop
+
+printf_end:
+lw $ra, 32($sp) # restore the prior environment:
+lw $fp, 28($sp)
+lw $s0, 24($sp)
+lw $s1, 20($sp)
+lw $s2, 16($sp)
+lw $s3, 12($sp)
+lw $s4, 8($sp)
+lw $s5, 4($sp)
+lw $s6, 0($sp)
+addu $sp, $sp, 36 # release the stack frame.
+jr $ra # return.
+
+.data
+printf_buf: .space 2
+
+## end of printf.asm

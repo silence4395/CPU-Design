@@ -1,0 +1,146 @@
+package bigproject.assem;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.TreeSet;
+
+import bigproject.main.RegConst;
+import bigproject.regalloc.DefaultMap;
+import bigproject.regalloc.RegAlloc;
+import bigproject.translate.Temp;
+
+public class Assem {
+
+	public String format;
+	public Object[] params;
+	
+	public Assem(String a, Object... b) {
+		format = a;
+		params = b;
+	}
+	
+	public Set<Temp> def() {
+		Set<Temp> result = new LinkedHashSet<Temp>();
+		int j = 0;
+		for (int i = 0; i < format.length(); i++) {
+			char c = format.charAt(i);
+			if ((c == '@') || (c == '%')) {
+				if ((c == '@') && (params[j] instanceof Temp)) {
+					result.add((Temp) params[j]);
+				}
+				j = j + 1;
+			}
+		}
+		return result;
+	}
+	
+	public Set<Temp> use() {
+		Set<Temp> result = new LinkedHashSet<Temp>();
+		int j = 0;
+		for (int i = 0; i < format.length(); i++) {
+			char c = format.charAt(i);
+			if ((c == '@') || (c == '%')) {
+				if ((c == '%') && (params[j] instanceof Temp)) {
+					result.add((Temp) params[j]);
+				}
+				j = j + 1;
+			}
+		}
+		return result;
+	}
+	
+	public String toString() {
+		return toString(DefaultMap.getSingleton());
+	}
+	
+	public String toString(RegAlloc alloc) {
+		if (isSpill())
+			return doSpill(alloc);
+		else
+			return doNormal(alloc);
+	}
+	
+	private boolean isSpill() {
+		for (Object param: params) {
+			if (param instanceof Temp && ((Temp) param).getLiveInterval().spilled)
+				return true;
+		}
+		return false;
+	}
+	
+	private String doNormal(RegAlloc alloc) {
+		StringBuffer buf = new StringBuffer();
+		
+		if (format.charAt(0) == '!')
+			format = format.substring(1);
+		else
+			buf.append('\t');
+			
+		for (int i = 0, j = 0; i < format.length(); i++) {
+			char c = format.charAt(i);
+			if ((c == '@') || (c == '%')) {
+				if (params[j] instanceof Temp)
+					buf.append(alloc.map((Temp) params[j]));
+				else
+					buf.append(params[j]);
+				j = j + 1;
+			} else {
+				buf.append(c);
+			}
+		}
+		return buf.toString();
+	}
+	
+	private String doSpill(RegAlloc alloc) {
+		StringBuffer before = new StringBuffer();
+		StringBuffer after = new StringBuffer();
+		
+		TreeSet<Integer> freeRegs = new TreeSet<Integer>();
+		freeRegs.add(26);	// $k0
+		freeRegs.add(27);	// $k1
+		freeRegs.add(30);   // $fp
+		
+		for (Temp t : use()) {
+			if (t.getLiveInterval().register == RegConst.SpillReg) {
+				int r = freeRegs.pollFirst();
+				t.getLiveInterval().register = r;
+				// lw $r, wordSize*t.index($r)
+				if (t.level.depth == 0)
+					before.append("\tlw $" + RegConst.RegNames[r] + ", " + 4 * t.index + "($gp)\n");
+				else
+					before.append("\tlw $" + RegConst.RegNames[r] + ", " + 4 * t.index + "($sp)\n");
+			}
+		}
+		
+		for (Temp t : def()) {
+			if (t.getLiveInterval().register == RegConst.SpillReg) {
+				int r = freeRegs.pollFirst();
+				t.getLiveInterval().register = r;
+			}
+		}
+		
+		// possibly a function call
+		String normal = doNormal(alloc);
+
+		for (Temp t : def()) {
+			if (t.getLiveInterval().spilled && t.getLiveInterval().register != RegConst.SpillReg) {
+				int r = t.getLiveInterval().register;
+				t.getLiveInterval().register = RegConst.SpillReg;
+				// sw $r, wordSize*t.index($d)
+				if (t.level.depth == 0)
+					after.append("\n\tsw $" + RegConst.RegNames[r] + ", " + 4 * t.index + "($gp)");
+				else
+					after.append("\n\tsw $" + RegConst.RegNames[r] + ", " + 4 * t.index + "($sp)");
+			}
+		}
+		
+		for (Temp t : use()) {
+			if (t.getLiveInterval().spilled && t.getLiveInterval().register != RegConst.SpillReg) {
+				t.getLiveInterval().register = RegConst.SpillReg;
+			}
+		}
+		
+		return before + normal + after;
+	
+	}
+}

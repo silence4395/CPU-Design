@@ -1,0 +1,58 @@
+package bigproject.semant;
+
+import bigproject.ast.*;
+import bigproject.env.*;
+
+public class Semant {
+	
+	private Env env = null;
+	
+	public Semant() {
+		this(new Env());
+	}
+	
+	public Semant(Env a) {
+		env = a;
+	}
+	
+	private boolean errorflag = false;
+	
+	private void error() {
+		errorflag = true;
+	}
+	
+	public boolean hasError() {
+		return errorflag;
+	}
+
+	private int loopcount = 0;
+	
+	public void checkProgram(Program a) {
+		loopcount = 0;
+		for (DeclStat decl: a.body) {
+			checkDeclStat((DeclStat) decl);
+		}
+	}
+	
+	private void checkDeclStat(DeclStat a) {
+		if (a instanceof TypeDecl)
+			checkDeclStat((TypeDecl) a);
+		if (a instanceof VarDecl)
+			checkDeclStat((VarDecl) a);
+		if (a instanceof FunDecl)
+			checkDeclStat((FunDecl) a);
+	}
+	
+	private void checkDeclStat(TypeDecl a) {
+		// TODO
+	}
+	
+	private void checkDeclStat(VarDecl a) {
+		// TODO
+	}
+	
+	private void checkDeclStat(FunDecl a) {
+		// TODO
+	}
+
+}

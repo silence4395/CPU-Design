@@ -1,0 +1,16 @@
+package bigproject.types;
+
+import java.util.List;
+
+import bigproject.symbol.*;
+
+public class Record extends Type {
+
+	class RecordField {
+		Type type;
+		Symbol name;
+	}
+	
+	public List<RecordField> fields;
+	
+}

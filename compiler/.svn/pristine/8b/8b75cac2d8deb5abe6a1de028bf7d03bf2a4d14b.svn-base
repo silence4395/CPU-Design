@@ -1,0 +1,43 @@
+package bigproject.opt;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import bigproject.analysis.Block;
+import bigproject.interm.Interm;
+import bigproject.interm.Move;
+import bigproject.interm.MoveI;
+import bigproject.translate.Const;
+import bigproject.translate.Temp;
+
+public class CopyPropagation {
+
+	public void work(Block block) {
+		Map<Temp, Temp> tmap = new HashMap<Temp, Temp>();
+		Map<Temp, Const> cmap = new HashMap<Temp, Const>();
+		for (int i = 0; i < block.interms.size(); i++) {
+			Interm interm = block.interms.get(i);
+			for (Temp t: interm.use()) {
+				if (tmap.containsKey(t))
+					interm.replaceUseTemp(t, tmap.get(t));
+				else if (cmap.containsKey(t)) {
+					// TODO
+					//interm.replaceTemp(t, cmap.get(t));
+				}
+			}
+			if (interm instanceof Move) {
+				tmap.put(((Move) interm).dest, ((Move) interm).source);
+				cmap.remove(((Move) interm).dest);
+			} else if (interm instanceof MoveI) {
+				cmap.put(((MoveI) interm).dest, ((MoveI) interm).source);
+				tmap.remove(((MoveI) interm).dest);
+			} else {
+				for (Temp t: interm.def())
+					tmap.remove(t);
+				for (Temp t: interm.def())
+					cmap.remove(t);
+			}
+		}
+
+	}
+}

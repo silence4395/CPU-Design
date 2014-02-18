@@ -1,0 +1,26 @@
+package bigproject.types;
+
+public class Array extends Pointer {
+
+	int capacity = -1;
+	
+	public Array(Type a) {
+		super(a);
+	}
+	
+	public Array(Type a, int b) {
+		super(a);
+		capacity = b;
+	}
+	
+	public Array(Type a, Integer b) {
+		super(a);
+		if (b != null)
+			capacity = b.intValue();
+	}
+
+	public boolean coerceTo(Type type) {
+		return type.actual() == this.actual();
+	}
+
+}

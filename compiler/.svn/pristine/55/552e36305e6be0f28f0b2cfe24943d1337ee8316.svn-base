@@ -1,0 +1,38 @@
+package bigproject.translate;
+
+import bigproject.analysis.LiveInterval;
+
+public class Temp extends Addr {
+
+	public static int Count = 0;
+	public Level level = null;
+	public int index = 0;
+	public int num = 0;
+	public boolean isaddress = false; 
+	
+	public Temp(Level a, int b) {
+		level = a;
+		index = b;
+		Count = Count + 1;
+		num = Count - 1;
+		isaddress = false;
+	}
+	
+	public String toString() {
+		return "t" + num;
+	}
+	
+	private LiveInterval interval = new LiveInterval(this, -1);
+	// FIXME
+	
+	public LiveInterval getLiveInterval() {
+		return interval;
+	}
+
+	public void expandInterval(int count) {
+		if (interval.startpoint == -1)
+			interval = new LiveInterval(this, count);
+		else
+			interval.expand(count);
+	}
+}
